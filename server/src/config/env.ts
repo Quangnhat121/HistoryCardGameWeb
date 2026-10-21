@@ -14,7 +14,7 @@ const parsePort = (value: string | undefined): number => {
 
 export const env = {
   mongoUri: process.env.MONGO_URI ?? "",
-  port: parsePort(process.env.PORT),
+  port: process.env.VERCEL ? 3000 : parsePort(process.env.PORT),
   clientOrigins: (process.env.CLIENT_ORIGIN ?? "http://localhost:5173")
     .split(",")
     .map((origin) => origin.trim().replace(/\/$/, ""))

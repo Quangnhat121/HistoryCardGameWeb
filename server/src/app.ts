@@ -10,7 +10,7 @@ export const createApp = (): express.Express => {
 
   app.use(cors({ origin: env.clientOrigins }));
   app.use(express.json());
-  app.use("/cards", express.static(path.resolve(__dirname, "../public/cards")));
+  app.use("/cards", express.static(path.resolve(process.cwd(), "public", "cards")));
   app.use("/api", async (_request, _response, next) => {
     try {
       await connectDatabase();
