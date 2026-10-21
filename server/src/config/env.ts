@@ -15,7 +15,10 @@ const parsePort = (value: string | undefined): number => {
 export const env = {
   mongoUri: process.env.MONGO_URI ?? "",
   port: parsePort(process.env.PORT),
-  clientOrigin: process.env.CLIENT_ORIGIN ?? "http://localhost:5173",
+  clientOrigins: (process.env.CLIENT_ORIGIN ?? "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim().replace(/\/$/, ""))
+    .filter(Boolean),
 };
 
 export const requireMongoUri = (): string => {

@@ -2,6 +2,7 @@ import { randomInt, randomUUID } from "node:crypto";
 import { Server as HttpServer } from "node:http";
 import { Server, Socket } from "socket.io";
 import { env } from "../config/env";
+import { connectDatabase } from "../config/database";
 import { GameEngine, viewFor } from "../game";
 import { Card } from "../models/Card";
 import { GameRecord } from "../models/GameRecord";
@@ -209,7 +210,7 @@ const reconnectFromHandshake = (io: Server, socket: Socket<any, any, any, Socket
 
 export const createSocketServer = (httpServer: HttpServer): Server => {
   const io = new Server(httpServer, {
-    cors: { origin: env.clientOrigin, methods: ["GET", "POST"] },
+    cors: { origin: env.clientOrigins, methods: ["GET", "POST"] },
   });
 
   io.on("connection", (socket: Socket<any, any, any, SocketData>) => {
@@ -255,6 +256,7 @@ export const createSocketServer = (httpServer: HttpServer): Server => {
 
     socket.on("room:start", async () => {
       try {
+        await connectDatabase();
         const { room, player } = getRoomMembership(socket);
         if (room.hostId !== player.playerId) throw new Error("Chỉ chủ phòng được bắt đầu ván");
         if (room.engine) throw new Error("Ván chơi đã bắt đầu");

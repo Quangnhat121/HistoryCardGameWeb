@@ -7,6 +7,8 @@ const savedRoomCode = localStorage.getItem("history-room-code");
 
 export const socket = io(SERVER_URL || window.location.origin, {
   autoConnect: true,
+  transports: ["websocket"],
+  path: (import.meta.env.VITE_SOCKET_PATH as string | undefined) || "/socket.io",
   reconnection: true,
   reconnectionDelay: 600,
   reconnectionDelayMax: 4_000,

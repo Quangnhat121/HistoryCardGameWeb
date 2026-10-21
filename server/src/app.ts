@@ -2,15 +2,23 @@ import path from "node:path";
 import cors from "cors";
 import express, { NextFunction, Request, Response } from "express";
 import { env } from "./config/env";
+import { connectDatabase } from "./config/database";
 import { apiRouter } from "./routes";
 
 export const createApp = (): express.Express => {
   const app = express();
 
-  app.use(cors({ origin: env.clientOrigin }));
+  app.use(cors({ origin: env.clientOrigins }));
   app.use(express.json());
   app.use("/cards", express.static(path.resolve(__dirname, "../public/cards")));
-  app.use("/api", apiRouter);
+  app.use("/api", async (_request, _response, next) => {
+    try {
+      await connectDatabase();
+      next();
+    } catch (error) {
+      next(error);
+    }
+  }, apiRouter);
 
   app.get("/health", (_request, response) => {
     response.json({ status: "ok" });
