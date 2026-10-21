@@ -1,9 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "express",
   "functions": {
-    "src/server.ts": {
+    "api/server.ts": {
       "maxDuration": 300
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/health", "destination": "/api/server/health" },
+    { "source": "/api/:path*", "destination": "/api/server/api/:path*" },
+    { "source": "/socket.io/:path*", "destination": "/api/server/socket.io/:path*" }
+  ]
 }

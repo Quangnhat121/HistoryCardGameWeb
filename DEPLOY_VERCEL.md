@@ -6,7 +6,7 @@ Repo này được deploy thành **hai Vercel Project** dùng chung một Git re
 
 1. Trong Vercel Dashboard, chọn **Add New → Project** và import repository.
 2. Đặt **Root Directory** là `server`.
-3. Vercel sẽ đọc `server/vercel.json` và nhận diện Express.
+3. Vercel sẽ đọc `server/vercel.json` và deploy `api/server.ts` thành Node.js Function chứa Express cùng Socket.IO.
 4. Thêm Environment Variables cho Production và Preview:
 
    - `MONGO_URI`: chuỗi kết nối MongoDB Atlas.
