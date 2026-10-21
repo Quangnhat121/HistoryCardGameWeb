@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { playTimerTick, playTimerUrgent } from "../sounds";
 
 interface TurnTimerProps {
   deadline: number | null;
@@ -8,6 +9,7 @@ interface TurnTimerProps {
 
 export function TurnTimer({ deadline, durationMs, playerName }: TurnTimerProps) {
   const [now, setNow] = useState(Date.now());
+  const lastSoundSecond = useRef<number | null>(null);
 
   useEffect(() => {
     setNow(Date.now());
@@ -16,9 +18,22 @@ export function TurnTimer({ deadline, durationMs, playerName }: TurnTimerProps) 
     return () => window.clearInterval(timer);
   }, [deadline]);
 
-  if (deadline === null || durationMs <= 0) return null;
-  const remainingMs = Math.max(0, deadline - now);
+  const remainingMs = deadline === null ? 0 : Math.max(0, deadline - now);
   const remainingSeconds = Math.ceil(remainingMs / 1000);
+
+  useEffect(() => {
+    if (deadline === null || remainingSeconds <= 0 || remainingSeconds > 10) return;
+    if (lastSoundSecond.current === remainingSeconds) return;
+    lastSoundSecond.current = remainingSeconds;
+    if (remainingSeconds <= 5) playTimerUrgent();
+    else playTimerTick();
+  }, [deadline, remainingSeconds]);
+
+  useEffect(() => {
+    lastSoundSecond.current = null;
+  }, [deadline]);
+
+  if (deadline === null || durationMs <= 0) return null;
   const ratio = Math.max(0, Math.min(1, remainingMs / durationMs));
   const stateClass = remainingSeconds <= 5 ? "is-danger" : ratio < .5 ? "is-warning" : "";
 

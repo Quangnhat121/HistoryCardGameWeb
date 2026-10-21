@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import type { ChallengeVisual } from "../types";
 import { Card } from "./Card";
+import { playCardFlip, playCorrect, playWrong } from "../sounds";
 
 // Particle burst for correct/incorrect
 function ParticleBurst({ correct }: { correct: boolean }) {
@@ -97,10 +98,15 @@ export function ChallengeOverlay({ result }: { result: ChallengeVisual | null })
     if (!result) return;
 
     // Flip card first
+    playCardFlip();
     const flipFrame = requestAnimationFrame(() => setFlipped(true));
 
     // Show result badge after flip completes
-    const resultTimer = window.setTimeout(() => setShowResult(true), 500);
+    const resultTimer = window.setTimeout(() => {
+      setShowResult(true);
+      if (result.correct) playCorrect();
+      else playWrong();
+    }, 500);
 
     // Screen shake for wrong answer
     if (!result.correct) {

@@ -1,6 +1,13 @@
+import { useEffect } from "react";
 import { Button } from "../components/Button";
+import { playDefeat, playVictory } from "../sounds";
 
 export function ResultPage({ winnerName, isSelf, onLobby }: { winnerName: string; isSelf: boolean; onLobby: () => void }) {
+  useEffect(() => {
+    if (isSelf) playVictory();
+    else playDefeat();
+  }, [isSelf]);
+
   return (
     <main className="flex min-h-screen items-center justify-center px-4">
       <section className="w-full max-w-lg rounded-3xl border border-gold/20 bg-panel/95 p-8 text-center shadow-2xl sm:p-12">

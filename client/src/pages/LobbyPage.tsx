@@ -1,4 +1,5 @@
 import { FormEvent, useState, useEffect, useRef } from "react";
+import { playClick } from "../sounds";
 interface LobbyPageProps {
   onCreate: (name: string) => void;
   onJoin: (code: string, name: string) => void;
@@ -118,13 +119,19 @@ export function LobbyPage({ onCreate, onJoin }: LobbyPageProps) {
   const create = (event: FormEvent) => {
     event.preventDefault();
     const cleanName = rememberName();
-    if (cleanName) onCreate(cleanName);
+    if (cleanName) {
+      playClick();
+      onCreate(cleanName);
+    }
   };
 
   const join = (event: FormEvent) => {
     event.preventDefault();
     const cleanName = rememberName();
-    if (cleanName && code.trim()) onJoin(code.trim().toUpperCase(), cleanName);
+    if (cleanName && code.trim()) {
+      playClick();
+      onJoin(code.trim().toUpperCase(), cleanName);
+    }
   };
 
   return (

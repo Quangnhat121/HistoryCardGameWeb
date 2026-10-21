@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { GameState, RoomState } from "../types";
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { Hand } from "../components/Hand";
 import { PlayerBar } from "../components/PlayerBar";
 import { TurnTimer } from "../components/TurnTimer";
+import { playCardPlace, playYourTurn } from "../sounds";
 
 interface GamePageProps {
   room: RoomState;
@@ -20,6 +21,7 @@ export function GamePage({ room, game, timeoutNotice, onPlace, onChallenge, onSk
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [selectedChallengeId, setSelectedChallengeId] = useState<number | null>(null);
   const [challengePending, setChallengePending] = useState(false);
+  const wasMyTurn = useRef(false);
   const isMyTurn = game.currentPlayerId === room.selfPlayerId;
   const ownPlayer = game.players.find((player) => player.id === room.selfPlayerId);
   const hand = ownPlayer?.hand ?? [];
@@ -34,8 +36,14 @@ export function GamePage({ room, game, timeoutNotice, onPlace, onChallenge, onSk
     if (game.hasChallengedThisTurn || !game.lastPlaced) setChallengePending(false);
   }, [game.hasChallengedThisTurn, game.lastPlaced, hand, isMyTurn, selectedCardId, selectedChallengeId]);
 
+  useEffect(() => {
+    if (isMyTurn && !wasMyTurn.current) playYourTurn();
+    wasMyTurn.current = isMyTurn;
+  }, [isMyTurn]);
+
   const place = () => {
     if (!isMyTurn || selectedCardId === null || selectedIndex === null || awaitingVerdict) return;
+    playCardPlace();
     onPlace(selectedCardId, selectedIndex);
     setSelectedCardId(null);
     setSelectedIndex(null);

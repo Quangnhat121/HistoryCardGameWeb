@@ -1,10 +1,11 @@
 import type { ButtonHTMLAttributes, PropsWithChildren } from "react";
+import { playClick } from "../sounds";
 
 type ButtonProps = PropsWithChildren<ButtonHTMLAttributes<HTMLButtonElement>> & {
   variant?: "primary" | "secondary" | "danger";
 };
 
-export function Button({ children, variant = "primary", className = "", ...props }: ButtonProps) {
+export function Button({ children, variant = "primary", className = "", onClick, ...props }: ButtonProps) {
   const variants = {
     primary: "bg-gold text-ink hover:bg-amber-300",
     secondary: "border border-white/15 bg-white/5 text-white hover:bg-white/10",
@@ -13,6 +14,10 @@ export function Button({ children, variant = "primary", className = "", ...props
   return (
     <button
       {...props}
+      onClick={(event) => {
+        playClick();
+        onClick?.(event);
+      }}
       className={`rounded-lg px-4 py-2.5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-40 ${variants[variant]} ${className}`}
     >
       {children}

@@ -1,13 +1,21 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { RoomState } from "../types";
 import { Button } from "../components/Button";
+import { playClick, playPlayerJoin } from "../sounds";
 
 export function WaitingRoomPage({ room, onStart, onLeave }: { room: RoomState; onStart: () => void; onLeave: () => void }) {
   const [copied, setCopied] = useState(false);
+  const previousPlayerCount = useRef(room.players.length);
   const isHost = room.hostId === room.selfPlayerId;
   const canStart = room.players.length >= 2 && room.players.length <= 4 && room.players.every((player) => player.connected);
 
+  useEffect(() => {
+    if (room.players.length > previousPlayerCount.current) playPlayerJoin();
+    previousPlayerCount.current = room.players.length;
+  }, [room.players.length]);
+
   const copyCode = async () => {
+    playClick();
     await navigator.clipboard.writeText(room.code);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
