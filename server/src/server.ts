@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { createApp } from "./app";
+import { createApp } from "./createApp";
 import { connectDatabase } from "./config/database";
 import { env } from "./config/env";
 import { createSocketServer } from "./socket";
