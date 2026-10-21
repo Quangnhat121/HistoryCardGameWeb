@@ -1,13 +1,11 @@
 import path from "node:path";
 import cors from "cors";
-import express, { NextFunction, Request, Response } from "express";
+import express, { Express, NextFunction, Request, Response } from "express";
 import { env } from "./config/env";
 import { connectDatabase } from "./config/database";
 import { apiRouter } from "./routes";
 
-export const createApp = (): express.Express => {
-  const app = express();
-
+export const configureApp = (app: Express): Express => {
   app.use(cors({ origin: env.clientOrigins }));
   app.use(express.json());
   app.use("/cards", express.static(path.resolve(process.cwd(), "public", "cards")));

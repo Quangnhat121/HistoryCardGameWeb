@@ -1,10 +1,12 @@
 import { createServer } from "node:http";
-import { createApp } from "./createApp";
+import express from "express";
+import { configureApp } from "./createApp";
 import { connectDatabase } from "./config/database";
 import { env } from "./config/env";
 import { createSocketServer } from "./socket";
 
-const httpServer = createServer(createApp());
+const app = configureApp(express());
+const httpServer = createServer(app);
 createSocketServer(httpServer);
 
 export default httpServer;
