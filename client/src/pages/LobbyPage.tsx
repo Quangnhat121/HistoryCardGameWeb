@@ -63,7 +63,7 @@ function HeroCardFan() {
   ];
 
   return (
-    <div className="hero-card-fan" aria-hidden="true">
+    <div className="hero-card-fan select-none" aria-hidden="true">
       {cards.map((card, i) => (
         <div
           key={i}
@@ -172,7 +172,7 @@ export function LobbyPage({ onCreate, onJoin }: LobbyPageProps) {
             <span className="badge-icon"><SwordIcon /></span>
             Kiến thức là quyền năng
           </div>
-          <h1 className="game-title text-[clamp(4.25rem,9vw,8.5rem)] font-black uppercase leading-[.82] tracking-[-.04em]">
+          <h1 className="game-title select-none text-[clamp(4.25rem,9vw,8.5rem)] font-black uppercase leading-[.82] tracking-[-.04em]">
             <span className="block text-[#f5e8ca] title-line-1">Dòng</span>
             <span className="title-gold block italic title-line-2">Thời Gian</span>
           </h1>

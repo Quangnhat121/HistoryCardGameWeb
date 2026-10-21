@@ -57,6 +57,10 @@ function vol(v: number) {
   return muted ? 0 : v * masterVolume;
 }
 
+function sfxVol(v: number) {
+  return Math.min(1, vol(v * 1.3));
+}
+
 function stopActiveMusic() {
   backgroundAudio?.pause();
   if (backgroundAudio) backgroundAudio.currentTime = 0;
@@ -133,7 +137,7 @@ export function playCardFlip() {
   noiseFilter.Q.value = 1.5;
 
   const noiseGain = ctx.createGain();
-  noiseGain.gain.setValueAtTime(vol(0.12), t);
+  noiseGain.gain.setValueAtTime(sfxVol(0.12), t);
   noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
 
   noise.connect(noiseFilter).connect(noiseGain).connect(ctx.destination);
@@ -147,7 +151,7 @@ export function playCardFlip() {
   osc.frequency.exponentialRampToValueAtTime(400, t + 0.08);
 
   const oscGain = ctx.createGain();
-  oscGain.gain.setValueAtTime(vol(0.06), t);
+  oscGain.gain.setValueAtTime(sfxVol(0.06), t);
   oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
 
   osc.connect(oscGain).connect(ctx.destination);
@@ -167,7 +171,7 @@ export function playCardPlace() {
   osc.frequency.exponentialRampToValueAtTime(60, t + 0.12);
 
   const gain = ctx.createGain();
-  gain.gain.setValueAtTime(vol(0.2), t);
+  gain.gain.setValueAtTime(sfxVol(0.2), t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
 
   osc.connect(gain).connect(ctx.destination);
@@ -181,7 +185,7 @@ export function playCardPlace() {
   tap.frequency.exponentialRampToValueAtTime(600, t + 0.04);
 
   const tapGain = ctx.createGain();
-  tapGain.gain.setValueAtTime(vol(0.08), t);
+  tapGain.gain.setValueAtTime(sfxVol(0.08), t);
   tapGain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
 
   tap.connect(tapGain).connect(ctx.destination);
@@ -204,7 +208,7 @@ export function playCorrect() {
     const gain = ctx.createGain();
     const start = t + i * 0.08;
     gain.gain.setValueAtTime(0.001, start);
-    gain.gain.linearRampToValueAtTime(vol(0.15), start + 0.03);
+    gain.gain.linearRampToValueAtTime(sfxVol(0.15), start + 0.03);
     gain.gain.exponentialRampToValueAtTime(0.001, start + 0.5);
 
     osc.connect(gain).connect(ctx.destination);
@@ -220,7 +224,7 @@ export function playCorrect() {
 
   const shimmerGain = ctx.createGain();
   shimmerGain.gain.setValueAtTime(0.001, t + 0.32);
-  shimmerGain.gain.linearRampToValueAtTime(vol(0.05), t + 0.38);
+  shimmerGain.gain.linearRampToValueAtTime(sfxVol(0.05), t + 0.38);
   shimmerGain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
 
   shimmer.connect(shimmerGain).connect(ctx.destination);
@@ -245,8 +249,8 @@ export function playWrong() {
     filter.frequency.value = 1200;
 
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(vol(0.12), t);
-    gain.gain.linearRampToValueAtTime(vol(0.14), t + 0.05);
+    gain.gain.setValueAtTime(sfxVol(0.12), t);
+    gain.gain.linearRampToValueAtTime(sfxVol(0.14), t + 0.05);
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
 
     osc.connect(filter).connect(gain).connect(ctx.destination);
@@ -269,7 +273,7 @@ export function playWrong() {
   noiseFilter.frequency.value = 800;
 
   const noiseGain = ctx.createGain();
-  noiseGain.gain.setValueAtTime(vol(0.15), t);
+  noiseGain.gain.setValueAtTime(sfxVol(0.15), t);
   noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
 
   noise.connect(noiseFilter).connect(noiseGain).connect(ctx.destination);
@@ -288,7 +292,7 @@ export function playClick() {
   osc.frequency.exponentialRampToValueAtTime(880, t + 0.03);
 
   const gain = ctx.createGain();
-  gain.gain.setValueAtTime(vol(0.06), t);
+  gain.gain.setValueAtTime(sfxVol(0.06), t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
 
   osc.connect(gain).connect(ctx.destination);
@@ -310,7 +314,7 @@ export function playYourTurn() {
     const gain = ctx.createGain();
     const start = t + i * 0.12;
     gain.gain.setValueAtTime(0.001, start);
-    gain.gain.linearRampToValueAtTime(vol(0.12), start + 0.02);
+    gain.gain.linearRampToValueAtTime(sfxVol(0.12), start + 0.02);
     gain.gain.exponentialRampToValueAtTime(0.001, start + 0.3);
 
     osc.connect(gain).connect(ctx.destination);
@@ -338,8 +342,8 @@ export function playVictory() {
     const gain = ctx.createGain();
     const start = t + i * 0.15;
     gain.gain.setValueAtTime(0.001, start);
-    gain.gain.linearRampToValueAtTime(vol(0.13), start + 0.04);
-    gain.gain.setValueAtTime(vol(0.13), start + 0.25);
+    gain.gain.linearRampToValueAtTime(sfxVol(0.13), start + 0.04);
+    gain.gain.setValueAtTime(sfxVol(0.13), start + 0.25);
     gain.gain.exponentialRampToValueAtTime(0.001, start + 0.9);
 
     osc.connect(gain).connect(ctx.destination);
@@ -366,7 +370,7 @@ export function playDefeat() {
     const gain = ctx.createGain();
     const start = t + i * 0.2;
     gain.gain.setValueAtTime(0.001, start);
-    gain.gain.linearRampToValueAtTime(vol(0.1), start + 0.04);
+    gain.gain.linearRampToValueAtTime(sfxVol(0.1), start + 0.04);
     gain.gain.exponentialRampToValueAtTime(0.001, start + 0.6);
 
     osc.connect(gain).connect(ctx.destination);
@@ -385,7 +389,7 @@ export function playTimerTick() {
   osc.frequency.value = 440;
 
   const gain = ctx.createGain();
-  gain.gain.setValueAtTime(vol(0.04), t);
+  gain.gain.setValueAtTime(sfxVol(0.04), t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
 
   osc.connect(gain).connect(ctx.destination);
@@ -407,7 +411,7 @@ export function playTimerUrgent() {
   filter.frequency.value = 2000;
 
   const gain = ctx.createGain();
-  gain.gain.setValueAtTime(vol(0.06), t);
+  gain.gain.setValueAtTime(sfxVol(0.06), t);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
 
   osc.connect(filter).connect(gain).connect(ctx.destination);
@@ -426,8 +430,8 @@ export function playPlayerJoin() {
   osc.frequency.setValueAtTime(659.25, t + 0.08);
 
   const gain = ctx.createGain();
-  gain.gain.setValueAtTime(vol(0.08), t);
-  gain.gain.setValueAtTime(vol(0.08), t + 0.08);
+  gain.gain.setValueAtTime(sfxVol(0.08), t);
+  gain.gain.setValueAtTime(sfxVol(0.08), t + 0.08);
   gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
 
   osc.connect(gain).connect(ctx.destination);
