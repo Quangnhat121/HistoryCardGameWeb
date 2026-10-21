@@ -792,6 +792,266 @@ h1, h2, h3, p, span, strong, button, input { text-rendering: optimizeLegibility;
 }
 @media (max-width:1279px) { .rules-timeline::before { display: none; } }
 
+/* ═══════════════════════════════════════════════════════════════════
+   CHALLENGE OVERLAY — Correct / Wrong reveal effects
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Overlay backgrounds */
+.challenge-overlay {
+  transition: background .3s;
+}
+.challenge-bg-correct {
+  background: radial-gradient(ellipse at center, rgba(16,40,28,.85), rgba(0,0,0,.6));
+  backdrop-filter: blur(6px);
+}
+.challenge-bg-wrong {
+  background: radial-gradient(ellipse at center, rgba(50,12,12,.85), rgba(0,0,0,.6));
+  backdrop-filter: blur(6px);
+}
+
+/* Background flash on reveal */
+.challenge-flash {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  animation: challenge-flash-anim .5s ease-out forwards;
+}
+.flash-correct {
+  background: radial-gradient(circle at center, rgba(52,211,153,.3), transparent 60%);
+}
+.flash-wrong {
+  background: radial-gradient(circle at center, rgba(239,68,68,.3), transparent 60%);
+}
+@keyframes challenge-flash-anim {
+  0% { opacity: 1; transform: scale(.5); }
+  100% { opacity: 0; transform: scale(2.5); }
+}
+
+/* Content container */
+.challenge-content {
+  position: relative; z-index: 2;
+}
+
+/* ─── Card Glow Halos ─── */
+.challenge-card-wrapper {
+  position: relative;
+  transition: filter .4s;
+}
+.challenge-card-wrapper::before {
+  content: ""; position: absolute; inset: -12px;
+  border-radius: 18px; z-index: -1;
+  opacity: 0; transition: opacity .4s;
+}
+.card-glow-correct::before {
+  opacity: 1;
+  background: radial-gradient(circle, rgba(52,211,153,.25), transparent 70%);
+  box-shadow: 0 0 40px rgba(52,211,153,.3), 0 0 80px rgba(52,211,153,.15);
+  animation: glow-pulse-correct 1.2s ease-in-out infinite alternate;
+}
+.card-glow-wrong::before {
+  opacity: 1;
+  background: radial-gradient(circle, rgba(239,68,68,.25), transparent 70%);
+  box-shadow: 0 0 40px rgba(239,68,68,.3), 0 0 80px rgba(239,68,68,.15);
+  animation: glow-pulse-wrong 0.8s ease-in-out infinite alternate;
+}
+@keyframes glow-pulse-correct {
+  from { box-shadow: 0 0 30px rgba(52,211,153,.2), 0 0 60px rgba(52,211,153,.1); }
+  to   { box-shadow: 0 0 50px rgba(52,211,153,.35), 0 0 100px rgba(52,211,153,.2); }
+}
+@keyframes glow-pulse-wrong {
+  from { box-shadow: 0 0 30px rgba(239,68,68,.2), 0 0 60px rgba(239,68,68,.1); }
+  to   { box-shadow: 0 0 50px rgba(239,68,68,.4), 0 0 100px rgba(239,68,68,.2); }
+}
+
+/* ─── Result Badge ─── */
+.challenge-result-badge {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 28px 14px 18px;
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  animation: badge-pop .4s cubic-bezier(.2,.8,.2,1.2) both;
+  box-shadow: 0 20px 60px rgba(0,0,0,.4);
+}
+.badge-correct {
+  border: 1.5px solid rgba(52,211,153,.5);
+  background: linear-gradient(135deg, rgba(6,40,28,.92), rgba(10,50,35,.88));
+  box-shadow: 0 20px 60px rgba(0,0,0,.4), 0 0 30px rgba(52,211,153,.1);
+}
+.badge-wrong {
+  border: 1.5px solid rgba(239,68,68,.5);
+  background: linear-gradient(135deg, rgba(50,8,8,.92), rgba(60,12,12,.88));
+  box-shadow: 0 20px 60px rgba(0,0,0,.4), 0 0 30px rgba(239,68,68,.1);
+}
+.badge-text {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.badge-text strong {
+  font-size: 26px; font-weight: 900;
+  letter-spacing: .03em; line-height: 1;
+}
+.badge-correct .badge-text strong { color: #6ee7b7; text-shadow: 0 0 20px rgba(110,231,183,.3); }
+.badge-wrong .badge-text strong { color: #fca5a5; text-shadow: 0 0 20px rgba(252,165,165,.3); }
+.badge-text span {
+  font-size: 12px; font-weight: 600;
+  color: rgba(255,255,255,.6);
+}
+@keyframes badge-pop {
+  0% { opacity: 0; transform: scale(.6) translateY(20px); }
+  60% { transform: scale(1.05) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ─── Animated Check / Cross Icons ─── */
+.result-icon {
+  flex: none; width: 52px; height: 52px;
+}
+.result-check-svg, .result-cross-svg {
+  width: 52px; height: 52px;
+}
+/* Check circle */
+.result-check-circle {
+  stroke: #34d399; stroke-width: 2.5;
+  stroke-dasharray: 151; stroke-dashoffset: 151;
+  animation: check-circle-draw .5s .05s ease forwards;
+}
+.result-check-path {
+  stroke: #6ee7b7; stroke-width: 3.5;
+  stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 36; stroke-dashoffset: 36;
+  animation: check-draw .35s .4s ease forwards;
+}
+@keyframes check-circle-draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes check-draw {
+  to { stroke-dashoffset: 0; }
+}
+/* Cross circle */
+.result-cross-circle {
+  stroke: #ef4444; stroke-width: 2.5;
+  stroke-dasharray: 151; stroke-dashoffset: 151;
+  animation: cross-circle-draw .5s .05s ease forwards;
+}
+.result-cross-path {
+  stroke: #fca5a5; stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-dasharray: 28; stroke-dashoffset: 28;
+  animation: cross-draw .25s .4s ease forwards;
+}
+.result-cross-path-2 {
+  animation-delay: .55s;
+}
+@keyframes cross-circle-draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes cross-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* ─── Particle Burst ─── */
+.challenge-particles {
+  position: absolute; left: 50%; top: 40%;
+  width: 0; height: 0; z-index: 3;
+  pointer-events: none;
+}
+.challenge-particle {
+  position: absolute;
+  width: var(--size); height: var(--size);
+  border-radius: 50%;
+  animation: particle-burst var(--duration) var(--delay) cubic-bezier(.15,.6,.35,1) forwards;
+  opacity: 0;
+}
+.particle-correct {
+  background: radial-gradient(circle, #6ee7b7, #34d399);
+  box-shadow: 0 0 6px rgba(52,211,153,.8);
+}
+.particle-wrong {
+  background: radial-gradient(circle, #fca5a5, #ef4444);
+  box-shadow: 0 0 6px rgba(239,68,68,.8);
+}
+@keyframes particle-burst {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--angle)) translateY(0) scale(1);
+  }
+  70% {
+    opacity: .7;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateY(calc(var(--distance) * -1)) scale(.2);
+  }
+}
+
+/* ─── Shockwave Rings ─── */
+.shockwave-container {
+  position: absolute; left: 50%; top: 40%;
+  width: 0; height: 0; z-index: 1;
+  pointer-events: none;
+}
+.shockwave-ring {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 60px; height: 60px;
+  margin-left: -30px; margin-top: -30px;
+  border-radius: 50%;
+  border: 2px solid;
+  animation: shockwave-expand .8s cubic-bezier(.2,.6,.35,1) forwards;
+  opacity: 0;
+}
+.shockwave-ring-2 {
+  animation-delay: .12s;
+  border-width: 1px;
+}
+.shockwave-correct {
+  border-color: rgba(52,211,153,.6);
+  box-shadow: 0 0 15px rgba(52,211,153,.2);
+}
+.shockwave-wrong {
+  border-color: rgba(239,68,68,.6);
+  box-shadow: 0 0 15px rgba(239,68,68,.2);
+}
+@keyframes shockwave-expand {
+  0% { opacity: .8; transform: scale(1); }
+  100% { opacity: 0; transform: scale(8); }
+}
+
+/* ─── Sparkles (correct only) ─── */
+.challenge-sparkles {
+  position: absolute; left: 50%; top: 40%;
+  width: 0; height: 0; z-index: 4;
+  pointer-events: none;
+}
+.challenge-sparkle {
+  position: absolute;
+  font-size: 14px;
+  color: #fde68a;
+  text-shadow: 0 0 8px rgba(253,230,138,.8);
+  animation: sparkle-float 1.2s var(--sd) ease-out forwards;
+  opacity: 0;
+}
+@keyframes sparkle-float {
+  0% { opacity: 0; transform: translate(0, 0) scale(0) rotate(0deg); }
+  20% { opacity: 1; transform: translate(calc(var(--sx) * .3), calc(var(--sy) * .3)) scale(var(--ss)) rotate(45deg); }
+  80% { opacity: .6; }
+  100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(0) rotate(180deg); }
+}
+
+/* ─── Screen Shake ─── */
+.challenge-shake {
+  animation: screen-shake .5s cubic-bezier(.2,.8,.4,1);
+}
+@keyframes screen-shake {
+  0%    { transform: translate(0, 0) rotate(0deg); }
+  10%   { transform: translate(-6px, -3px) rotate(-.5deg); }
+  20%   { transform: translate(5px, 4px) rotate(.5deg); }
+  30%   { transform: translate(-4px, 2px) rotate(-.3deg); }
+  40%   { transform: translate(3px, -3px) rotate(.3deg); }
+  50%   { transform: translate(-3px, 1px) rotate(-.2deg); }
+  60%   { transform: translate(2px, -2px) rotate(.2deg); }
+  70%   { transform: translate(-2px, 1px) rotate(-.1deg); }
+  80%   { transform: translate(1px, -1px) rotate(.1deg); }
+  100%  { transform: translate(0, 0) rotate(0deg); }
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
