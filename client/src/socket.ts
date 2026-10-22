@@ -30,5 +30,13 @@ export const clearSession = (): void => {
   socket.auth = {};
 };
 
+const toWebpPath = (path: string): string => path.replace(/\.png$/i, ".webp");
+
 export const assetUrl = (path: string): string =>
-  path.startsWith("http") ? path : `${SERVER_URL}${path}`;
+  path.startsWith("http") ? path : `${SERVER_URL}${toWebpPath(path)}`;
+
+export const thumbnailAssetUrl = (path: string): string => {
+  if (path.startsWith("http")) return path;
+  const filename = toWebpPath(path).split("/").pop();
+  return `${SERVER_URL}/cards/thumbs/${filename}`;
+};

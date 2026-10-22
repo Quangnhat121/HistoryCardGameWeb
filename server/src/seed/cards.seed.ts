@@ -51,9 +51,13 @@ const validateCards = (cards: CardSeedData[]): void => {
 };
 
 const seedCards = async (): Promise<void> => {
-  validateCards(cardsData);
+  const optimizedCards = cardsData.map((card) => ({
+    ...card,
+    image: card.image.replace(/\.png$/i, ".webp"),
+  }));
+  validateCards(optimizedCards);
 
-  const warnings = findCloseYears(cardsData);
+  const warnings = findCloseYears(optimizedCards);
   if (warnings.length > 0) {
     console.warn("Cảnh báo các thẻ trùng năm hoặc cách nhau dưới 2 năm:");
     warnings.forEach((warning) => console.warn(`- ${warning}`));
@@ -62,7 +66,7 @@ const seedCards = async (): Promise<void> => {
   }
 
   await connectDatabase();
-  await Card.bulkWrite(cardsData.map((card) => ({
+  await Card.bulkWrite(optimizedCards.map((card) => ({
     updateOne: {
       filter: { cardId: card.cardId },
       update: {
@@ -72,7 +76,7 @@ const seedCards = async (): Promise<void> => {
       upsert: true,
     },
   })));
-  console.log(`Đã đồng bộ ${cardsData.length} thẻ.`);
+  console.log(`Đã đồng bộ ${optimizedCards.length} thẻ WebP.`);
 };
 
 seedCards()

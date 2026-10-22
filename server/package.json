@@ -10,6 +10,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "seed": "tsx src/seed/cards.seed.ts",
+    "optimize:images": "node scripts/optimize-card-images.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:socket": "tsx scripts/socket-smoke.ts"
@@ -26,6 +27,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.5",
+    "sharp": "^0.34.5",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"

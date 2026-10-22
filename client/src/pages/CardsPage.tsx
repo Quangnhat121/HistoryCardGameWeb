@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { assetUrl, SERVER_URL } from "../socket";
+import { assetUrl, SERVER_URL, thumbnailAssetUrl } from "../socket";
 import type { CardFront } from "../types";
 
 interface CardsPageProps {
@@ -250,7 +250,7 @@ export function CardsPage({ onBack }: CardsPageProps) {
                     #{String(card.cardId).padStart(2, "0")}
                   </span>
                   <span className="library-card-image">
-                    <img src={assetUrl(card.image)} alt="" loading="lazy" />
+                    <img src={thumbnailAssetUrl(card.image)} alt="" loading="lazy" />
                   </span>
                   <span className="library-card-copy">
                     <small>Sự kiện lịch sử</small>
