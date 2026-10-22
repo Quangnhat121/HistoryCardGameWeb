@@ -11,14 +11,13 @@ export function ResultPage({ winnerName, isSelf, onLobby }: { winnerName: string
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4">
-      {/* Victory: pattern circle of gold particles; Defeat: subtle floating cool tones */}
+      {/* Victory: scattered gold particles floating up; Defeat: subtle floating cool tones */}
       {isSelf ? (
         <AntigravityCanvas
           particleCount={55}
           speedFactor={0.9}
           gravity={-0.06}
-          shape="circle"
-          usePattern={true}
+          shape="mixed"
           colors={["#e9bd67", "#f5e8ca", "#f0c86a", "#ffd700", "#d4a843", "#ffe680"]}
           friction={0.965}
           interactionRadius={160}
