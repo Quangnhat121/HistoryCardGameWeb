@@ -1,4 +1,4 @@
-export interface GameCard { cardId: number; image: string; event: string; year: number; }
+export interface GameCard { cardId: number; image: string; event: string; year: number; month?: number; }
 export interface GamePlayerInput { id: string; name: string; }
 export interface GamePlayer extends GamePlayerInput { hand: GameCard[]; }
 export type GamePhase = "turn" | "awaiting_verdict" | "finished";
@@ -19,11 +19,11 @@ export interface GameState {
   turnDeadline: number | null;
   turnDurationMs: number;
 }
-export interface ChallengeResult { cardId: number; year: number; correct: boolean; winner: string | null; }
+export interface ChallengeResult { cardId: number; year: number; month?: number; correct: boolean; winner: string | null; }
 export interface PublicCardFront { cardId: number; image: string; event: string; }
-export interface PublicRevealedCard extends PublicCardFront { year: number; }
+export interface PublicRevealedCard extends PublicCardFront { year: number; month?: number; }
 export interface PlayerView { id: string; name: string; handCount: number; hand?: PublicCardFront[]; }
-export interface TimelineCardView extends PublicCardFront { revealed: boolean; placedBy: string | null; isRoot: boolean; year?: number; }
+export interface TimelineCardView extends PublicCardFront { revealed: boolean; placedBy: string | null; isRoot: boolean; year?: number; month?: number; }
 export interface LastPlacedView extends PublicCardFront { index: number; playerId: string; }
 export interface GameView {
   players: PlayerView[];

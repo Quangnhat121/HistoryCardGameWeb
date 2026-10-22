@@ -19,6 +19,26 @@ const createEngine = () => {
 };
 
 describe("GameEngine theo lượt hai bước", () => {
+  it("xếp các sự kiện trùng năm theo tháng", () => {
+    const sameYearCards: GameCard[] = [
+      { cardId: 1, image: "/cards/root.png", event: "Sự kiện gốc", year: 1944 },
+      { cardId: 2, image: "/cards/august.png", event: "Sự kiện tháng 8", year: 1945, month: 8 },
+      ...Array.from({ length: 4 }, (_, index) => ({ cardId: index + 3, image: `/cards/${index + 3}.png`, event: `Sự kiện ${index + 3}`, year: 1950 + index })),
+      { cardId: 7, image: "/cards/december.png", event: "Sự kiện tháng 12", year: 1945, month: 12 },
+      ...Array.from({ length: 4 }, (_, index) => ({ cardId: index + 8, image: `/cards/${index + 8}.png`, event: `Sự kiện ${index + 8}`, year: 1960 + index })),
+    ];
+    const engine = new GameEngine(() => 0.999999);
+    engine.createGame(players.slice(0, 2), sameYearCards);
+
+    engine.placeCard("A", 2, 1);
+    expect(engine.challenge("B", 2)).toMatchObject({ correct: true, year: 1945, month: 8 });
+    engine.placeCard("B", 7, 2);
+    expect(engine.challenge("A", 7)).toMatchObject({ correct: true, year: 1945, month: 12 });
+
+    const view = viewFor(engine.state, "A");
+    expect(view.timeline.find((card) => card.cardId === 7)).toMatchObject({ year: 1945, month: 12 });
+  });
+
   it("A đặt, B khui đúng rồi B đặt, lượt chuyển tới C", () => {
     const engine = createEngine();
     engine.placeCard("A", 2, 0);

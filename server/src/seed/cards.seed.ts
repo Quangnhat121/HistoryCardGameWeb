@@ -3,7 +3,7 @@ import { Card } from "../models/Card";
 import { CardSeedData, cardsData } from "./cards.data";
 
 const findCloseYears = (cards: CardSeedData[]): string[] => {
-  const sorted = [...cards].sort((first, second) => first.year - second.year);
+  const sorted = [...cards].sort((first, second) => first.year - second.year || (first.month ?? 0) - (second.month ?? 0));
   const warnings: string[] = [];
 
   for (let index = 1; index < sorted.length; index += 1) {
@@ -34,6 +34,19 @@ const validateCards = (cards: CardSeedData[]): void => {
     if (!Number.isInteger(card.cardId) || !Number.isInteger(card.year)) {
       throw new Error(`Thẻ ${card.cardId} có cardId hoặc year không hợp lệ.`);
     }
+    if (card.month !== undefined && (!Number.isInteger(card.month) || card.month < 1 || card.month > 12)) {
+      throw new Error(`Thẻ ${card.cardId} có month không hợp lệ.`);
+    }
+  }
+
+  const cardsByYear = new Map<number, CardSeedData[]>();
+  cards.forEach((card) => cardsByYear.set(card.year, [...(cardsByYear.get(card.year) ?? []), card]));
+  for (const [year, sameYearCards] of cardsByYear) {
+    if (sameYearCards.length < 2) continue;
+    if (sameYearCards.some((card) => card.month === undefined))
+      throw new Error(`Các thẻ trùng năm ${year} phải có month để phân biệt.`);
+    if (new Set(sameYearCards.map((card) => card.month)).size !== sameYearCards.length)
+      throw new Error(`Các thẻ năm ${year} có month bị trùng.`);
   }
 };
 
@@ -49,9 +62,17 @@ const seedCards = async (): Promise<void> => {
   }
 
   await connectDatabase();
-  await Card.deleteMany({});
-  await Card.insertMany(cardsData);
-  console.log(`Đã seed ${cardsData.length} thẻ.`);
+  await Card.bulkWrite(cardsData.map((card) => ({
+    updateOne: {
+      filter: { cardId: card.cardId },
+      update: {
+        $set: card,
+        ...(card.month === undefined ? { $unset: { month: 1 } } : {}),
+      },
+      upsert: true,
+    },
+  })));
+  console.log(`Đã đồng bộ ${cardsData.length} thẻ.`);
 };
 
 seedCards()

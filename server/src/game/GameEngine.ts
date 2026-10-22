@@ -3,6 +3,9 @@ import { ChallengeResult, GameCard, GamePlayerInput, GameState, TurnTimeoutResul
 
 const INITIAL_HAND_SIZE = 5;
 
+const compareChronology = (first: GameCard, second: GameCard): number =>
+  first.year - second.year || (first.month ?? 0) - (second.month ?? 0);
+
 export class GameEngine {
   private gameState: GameState | null = null;
   public constructor(
@@ -53,7 +56,8 @@ export class GameEngine {
     if (timelineIndex === -1) throw new Error("Không tìm thấy thẻ vừa đặt trên timeline");
     const left = state.timeline[timelineIndex - 1]?.card;
     const right = state.timeline[timelineIndex + 1]?.card;
-    const correct = (!left || left.year < lastPlaced.card.year) && (!right || lastPlaced.card.year < right.year);
+    const correct = (!left || compareChronology(left, lastPlaced.card) < 0) &&
+      (!right || compareChronology(lastPlaced.card, right) < 0);
 
     if (correct) {
       state.timeline[timelineIndex].revealed = true;
@@ -73,7 +77,7 @@ export class GameEngine {
       state.phase = "turn";
     }
 
-    const result = { cardId, year: lastPlaced.card.year, correct, winner: state.winner };
+    const result = { cardId, year: lastPlaced.card.year, month: lastPlaced.card.month, correct, winner: state.winner };
     state.lastPlaced = null;
     state.hasChallengedThisTurn = true;
     if (state.phase === "finished") this.clearTurnTimer(state);

@@ -7,6 +7,7 @@ interface CardProps {
   card: CardFront;
   showBack?: boolean;
   year?: number;
+  month?: number;
   selected?: boolean;
   highlighted?: boolean;
   clickable?: boolean;
@@ -17,7 +18,7 @@ interface CardProps {
 const formatYear = (year: number): string => year < 0 ? `${Math.abs(year)} TCN` : `${year}`;
 
 export function Card({
-  card, showBack = false, year, selected = false, highlighted = false,
+  card, showBack = false, year, month, selected = false, highlighted = false,
   clickable = false, className = "", onClick,
 }: CardProps) {
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -70,7 +71,7 @@ export function Card({
           type="button"
           onClick={handleCardClick}
           disabled={!clickable}
-          aria-label={`${clickable ? "Chọn" : "Thẻ"} ${card.event}${showBack && year !== undefined ? `, năm ${formatYear(year)}` : ""}`}
+          aria-label={`${clickable ? "Chọn" : "Thẻ"} ${card.event}${showBack && year !== undefined ? `, ${month ? `tháng ${month}, ` : ""}năm ${formatYear(year)}` : ""}`}
           className={`card-scene relative aspect-[2/3] w-full rounded-xl text-left transition duration-200 group-hover/card:-translate-y-2 group-hover/card:scale-[1.06] ${
             clickable ? "cursor-pointer" : "cursor-default"
           } ${selected ? "-translate-y-3 ring-2 ring-gold" : ""} ${highlighted ? "shadow-glow animate-pulse-soft" : ""}`}
@@ -84,6 +85,7 @@ export function Card({
               <span className="card-back-corner corner-top-left" /><span className="card-back-corner corner-top-right" />
               <span className="card-back-corner corner-bottom-left" /><span className="card-back-corner corner-bottom-right" />
               <span className="card-back-label">Năm lịch sử</span>
+              {month && <span className="card-back-month">Tháng {month}</span>}
               <strong className="card-back-year">{year === undefined ? "?" : formatYear(year)}</strong>
               <span className="card-back-event line-clamp-3">{card.event}</span>
             </span>
@@ -105,6 +107,7 @@ export function Card({
                   <span className="card-back-corner corner-top-left" /><span className="card-back-corner corner-top-right" />
                   <span className="card-back-corner corner-bottom-left" /><span className="card-back-corner corner-bottom-right" />
                   <span className="card-back-label">Năm lịch sử</span>
+                  {month && <span className="card-back-month">Tháng {month}</span>}
                   <strong className="card-back-year">{year === undefined ? "?" : formatYear(year)}</strong>
                   <span className="card-back-event">{card.event}</span>
                 </div>

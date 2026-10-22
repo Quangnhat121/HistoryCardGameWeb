@@ -272,6 +272,14 @@ export function LobbyPage({ onCreate, onJoin, onBrowseCards }: LobbyPageProps) {
         </div>
       </section>
 
+      <aside className="homepage-disclaimer library-disclaimer" aria-label="Lưu ý về nội dung">
+        <span className="library-disclaimer-mark" aria-hidden="true">i</span>
+        <div>
+          <strong>Lưu ý về nội dung</strong>
+          <p>Thông tin lịch sử trên các thẻ được tổng hợp từ Wikipedia, có thể chưa hoàn toàn chính xác và không dùng làm tài liệu tham khảo. Nội dung chỉ phục vụ mục đích giải trí. Hình ảnh được tạo bằng AI, chỉ mang tính minh họa và có thể không phản ánh chính xác nhân vật, địa điểm hoặc bối cảnh lịch sử.</p>
+        </div>
+      </aside>
+
       {/* Footer */}
       <footer className="relative z-[1] border-t border-white/[.06] px-5 py-5 text-center text-[10px] uppercase tracking-[.18em] text-white/25">
         Kiến thức lịch sử chỉ mang tính tham khảo · Dòng Thời Gian © 2026

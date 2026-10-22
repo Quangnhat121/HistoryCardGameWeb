@@ -8,6 +8,7 @@ export interface CardFront {
 
 export interface RevealedCard extends CardFront {
   year: number;
+  month?: number;
 }
 
 export interface TimelineCard extends CardFront {
@@ -15,6 +16,7 @@ export interface TimelineCard extends CardFront {
   placedBy: string | null;
   isRoot: boolean;
   year?: number;
+  month?: number;
 }
 
 export interface LastPlaced extends CardFront {
@@ -61,6 +63,7 @@ export interface RoomState {
 export interface ChallengeResult {
   cardId: number;
   year: number;
+  month?: number;
   correct: boolean;
   winner: string | null;
   drawerName: string;

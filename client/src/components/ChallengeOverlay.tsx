@@ -153,7 +153,7 @@ export function ChallengeOverlay({ result }: { result: ChallengeVisual | null })
 
         {/* Card with glow */}
         <div className={`challenge-card-wrapper ${showResult ? (result.correct ? "card-glow-correct" : "card-glow-wrong") : ""}`}>
-          <Card card={result.card} showBack={flipped} year={result.year} className="w-40 sm:w-48" />
+          <Card card={result.card} showBack={flipped} year={result.year} month={result.month} className="w-40 sm:w-48" />
         </div>
 
         {/* Result badge */}

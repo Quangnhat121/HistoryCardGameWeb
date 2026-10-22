@@ -263,7 +263,10 @@ export const createSocketServer = (httpServer: HttpServer): Server => {
         if (room.players.length < 2 || room.players.length > 4) throw new Error("Cần từ 2 đến 4 người để bắt đầu");
         if (room.players.some((entry) => !entry.connected)) throw new Error("Tất cả người chơi phải đang kết nối");
 
-        const cards = await Card.find().sort({ cardId: 1 }).select({ _id: 0, cardId: 1, image: 1, event: 1, year: 1 }).lean();
+        const cardDocuments = await Card.find().sort({ cardId: 1 }).select({ _id: 0, cardId: 1, image: 1, event: 1, year: 1, month: 1 }).lean();
+        const cards = cardDocuments.map(({ cardId, image, event, year, month }) => ({
+          cardId, image, event, year, ...(month ? { month } : {}),
+        }));
         const engine = new GameEngine();
         engine.createGame(room.players.map(({ playerId, name }) => ({ id: playerId, name })), cards);
         room.engine = engine;
