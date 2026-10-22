@@ -3,6 +3,7 @@ import { playClick } from "../sounds";
 interface LobbyPageProps {
   onCreate: (name: string) => void;
   onJoin: (code: string, name: string) => void;
+  onBrowseCards: () => void;
 }
 
 function UsersIcon() {
@@ -97,7 +98,7 @@ function useMouseLight(ref: React.RefObject<HTMLElement | null>) {
   }, [ref]);
 }
 
-export function LobbyPage({ onCreate, onJoin }: LobbyPageProps) {
+export function LobbyPage({ onCreate, onJoin, onBrowseCards }: LobbyPageProps) {
   const [name, setName] = useState(localStorage.getItem("history-player-name") ?? "");
   const [code, setCode] = useState("");
   const [isLoaded, setIsLoaded] = useState(false);
@@ -157,6 +158,7 @@ export function LobbyPage({ onCreate, onJoin }: LobbyPageProps) {
         </a>
         <div className="hidden items-center gap-8 text-xs font-bold uppercase tracking-[.16em] text-white/45 md:flex">
           <a className="nav-link transition hover:text-[#e9bd67]" href="#play">Bắt đầu</a>
+          <button type="button" className="nav-link transition hover:text-[#e9bd67]" onClick={onBrowseCards}>Bộ thẻ</button>
           <a className="nav-link transition hover:text-[#e9bd67]" href="#guide">Luật chơi</a>
         </div>
         <span className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[.14em] text-emerald-300/80">
@@ -228,6 +230,11 @@ export function LobbyPage({ onCreate, onJoin }: LobbyPageProps) {
             <button type="submit" disabled={!name.trim() || code.length !== 5} className="join-btn">Vào phòng <ArrowIcon /></button>
           </form>
           <p className="mt-4 text-center text-[11px] text-white/30">Phòng riêng tư · Từ 2 đến 4 người chơi</p>
+          <button type="button" onClick={onBrowseCards} className="browse-cards-btn">
+            <span className="browse-cards-icon"><ScrollIcon /></span>
+            <span><small>Muốn xem trước?</small><strong>Khám phá bộ thẻ hiện có</strong></span>
+            <ArrowIcon />
+          </button>
         </section>
       </div>
 
