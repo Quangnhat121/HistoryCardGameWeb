@@ -1,5 +1,6 @@
 import { FormEvent, useState, useEffect, useRef } from "react";
 import { playClick } from "../sounds";
+import { AntigravityCanvas } from "../components/AntigravityCanvas";
 interface LobbyPageProps {
   onCreate: (name: string) => void;
   onJoin: (code: string, name: string) => void;
@@ -130,6 +131,18 @@ export function LobbyPage({ onCreate, onJoin, onBrowseCards, onBrowseRules }: Lo
 
   return (
     <main className={`lobby-shell min-h-screen overflow-hidden text-white ${isLoaded ? "is-loaded" : ""}`}>
+      {/* Antigravity particle background (behind everything) */}
+      <AntigravityCanvas
+        particleCount={35}
+        speedFactor={0.55}
+        gravity={-0.04}
+        shape="mixed"
+        colors={["#e9bd67", "#f5e8ca", "#b08a3e", "#d4a843", "#a07832", "#c8963e"]}
+        friction={0.978}
+        interactionRadius={120}
+        zIndex={0}
+        opacity={0.18}
+      />
       {/* Background layers */}
       <div className="lobby-bg-vignette" />
       <div className="lobby-aurora lobby-aurora-one" />

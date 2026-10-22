@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { RoomState } from "../types";
 import { Button } from "../components/Button";
 import { playClick, playPlayerJoin } from "../sounds";
+import { AntigravityCanvas } from "../components/AntigravityCanvas";
 
 export function WaitingRoomPage({ room, onStart, onLeave }: { room: RoomState; onStart: () => void; onLeave: () => void }) {
   const [copied, setCopied] = useState(false);
@@ -23,6 +24,18 @@ export function WaitingRoomPage({ room, onStart, onLeave }: { room: RoomState; o
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-2xl flex-col justify-center px-4 py-10">
+      {/* Antigravity particle background */}
+      <AntigravityCanvas
+        particleCount={28}
+        speedFactor={0.45}
+        gravity={-0.035}
+        shape="mixed"
+        colors={["#e9bd67", "#f5e8ca", "#b08a3e", "#d4a843", "#c8963e"]}
+        friction={0.98}
+        interactionRadius={100}
+        zIndex={0}
+        opacity={0.13}
+      />
       <section className="rounded-3xl border border-white/10 bg-panel/90 p-6 text-center shadow-2xl sm:p-10">
         <p className="text-xs font-bold uppercase tracking-[0.3em] text-gold">Phòng chờ</p>
         <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-normal text-parchment">Mời đồng đội tham gia</h1>
