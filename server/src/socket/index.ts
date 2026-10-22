@@ -267,8 +267,13 @@ export const createSocketServer = (httpServer: HttpServer): Server => {
         const cards = cardDocuments.map(({ cardId, image, event, year, month }) => ({
           cardId, image, event, year, ...(month ? { month } : {}),
         }));
+        const turnOrder = room.players.map(({ playerId, name }) => ({ id: playerId, name }));
+        for (let index = turnOrder.length - 1; index > 0; index -= 1) {
+          const swapIndex = randomInt(index + 1);
+          [turnOrder[index], turnOrder[swapIndex]] = [turnOrder[swapIndex], turnOrder[index]];
+        }
         const engine = new GameEngine();
-        engine.createGame(room.players.map(({ playerId, name }) => ({ id: playerId, name })), cards);
+        engine.createGame(turnOrder, cards);
         room.engine = engine;
         room.startedAt = new Date();
         emitRoomUpdate(io, room);

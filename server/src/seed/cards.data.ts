@@ -45,7 +45,7 @@ export const cardsData: CardSeedData[] = [
   // Văn minh Sumer hình thành qua một giai đoạn dài; lấy mốc xấp xỉ 3500 TCN.
   { cardId: 31, image: "/cards/Văn minh Sumer xuất hiện ở Lưỡng Hà – khoảng 3500 TCN.png", event: "Văn minh Sumer xuất hiện ở Lưỡng Hà", year: -3500 },
   { cardId: 32, image: "/cards/Vasco da Gama đến Ấn Độ – 1498.png", event: "Vasco da Gama đến Ấn Độ", year: 1498 },
-  { cardId: 33, image: "/cards/Đại hiến chương Magna Carta được ký kết-1215.png", event: "Vua John của Anh ký Đại Tự chương (Magna Carta)", year: 1215 },
+  { cardId: 33, image: "/cards/Vua John của Anh ký Đại Tự chương (Magna Carta) - 1215.png", event: "Vua John của Anh ký Đại Tự chương (Magna Carta)", year: 1215 },
   // Vương triều thứ nhất có niên đại ước tính; lấy mốc khoảng 3150 TCN.
   { cardId: 34, image: "/cards/Vương triều thứ nhất của Ai Cập cổ đại được thành lập - 3150 TCN.png", event: "Vương triều thứ nhất của Ai Cập cổ đại được thành lập", year: -3150 },
   { cardId: 35, image: "/cards/Alexander Graham Bell phát minh ra điện thoại-1876.png", event: "Alexander Graham Bell phát minh ra điện thoại", year: 1876 },

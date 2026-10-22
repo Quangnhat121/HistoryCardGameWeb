@@ -7,12 +7,13 @@ import { GamePage } from "./pages/GamePage";
 import { CardsPage } from "./pages/CardsPage";
 import { LobbyPage } from "./pages/LobbyPage";
 import { ResultPage } from "./pages/ResultPage";
+import { RulesPage } from "./pages/RulesPage";
 import { WaitingRoomPage } from "./pages/WaitingRoomPage";
 import { startBackgroundMusic, stopBackgroundMusic } from "./sounds";
 
 export default function App() {
   const game = useGame();
-  const [showCards, setShowCards] = useState(() => window.location.hash === "#cards");
+  const [pageHash, setPageHash] = useState(() => window.location.hash);
   const selfName = game.room?.players.find((player) => player.playerId === game.room?.selfPlayerId)?.name;
   const musicMode = game.room?.started && game.game ? "game" : "home";
 
@@ -22,17 +23,20 @@ export default function App() {
   }, [musicMode]);
 
   useEffect(() => {
-    const syncPageWithHash = () => setShowCards(window.location.hash === "#cards");
+    const syncPageWithHash = () => setPageHash(window.location.hash);
     window.addEventListener("hashchange", syncPageWithHash);
     return () => window.removeEventListener("hashchange", syncPageWithHash);
   }, []);
 
   const openCards = () => { window.location.hash = "cards"; };
+  const openRules = () => { window.location.hash = "rules"; };
   const closeCards = () => { window.location.hash = ""; };
 
-  let page = showCards
+  let page = pageHash === "#cards"
     ? <CardsPage onBack={closeCards} />
-    : <LobbyPage onCreate={game.createRoom} onJoin={game.joinRoom} onBrowseCards={openCards} />;
+    : pageHash === "#rules"
+      ? <RulesPage onBack={closeCards} onBrowseCards={openCards} />
+      : <LobbyPage onCreate={game.createRoom} onJoin={game.joinRoom} onBrowseCards={openCards} onBrowseRules={openRules} />;
   if (game.room && !game.room.started) page = <WaitingRoomPage room={game.room} onStart={game.startGame} onLeave={game.leaveRoom} />;
   if (game.room?.started && game.game) page = <GamePage room={game.room} game={game.game} timeoutNotice={game.turnTimeoutNotice} onPlace={game.placeCard} onChallenge={game.challenge} onSkipChallenge={game.skipChallenge} />;
   if (game.winnerName) page = <ResultPage winnerName={game.winnerName} isSelf={game.winnerName === selfName} onLobby={game.leaveRoom} />;

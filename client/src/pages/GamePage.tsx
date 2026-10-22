@@ -5,6 +5,7 @@ import { Card } from "../components/Card";
 import { Hand } from "../components/Hand";
 import { PlayerBar } from "../components/PlayerBar";
 import { TurnTimer } from "../components/TurnTimer";
+import { TurnOrderOverlay } from "../components/TurnOrderOverlay";
 import { playCardPlace, playYourTurn } from "../sounds";
 
 interface GamePageProps {
@@ -57,6 +58,7 @@ export function GamePage({ room, game, timeoutNotice, onPlace, onChallenge, onSk
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-[1600px] px-3 py-4 sm:px-6 sm:py-6">
+      <TurnOrderOverlay players={game.players} firstPlayerId={game.currentPlayerId} />
       <div className="mb-3 flex items-center justify-between px-1">
         <div><span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gold">Phòng</span><strong className="ml-2 font-mono tracking-widest text-parchment">{room.code}</strong></div>
         <div className={`rounded-full px-3 py-1.5 text-xs font-bold ${isMyTurn ? "bg-emerald-400/15 text-emerald-300" : "bg-white/5 text-slate-400"}`}>

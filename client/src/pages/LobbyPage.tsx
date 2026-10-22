@@ -4,6 +4,7 @@ interface LobbyPageProps {
   onCreate: (name: string) => void;
   onJoin: (code: string, name: string) => void;
   onBrowseCards: () => void;
+  onBrowseRules: () => void;
 }
 
 function UsersIcon() {
@@ -16,14 +17,6 @@ function ArrowIcon() {
 
 function SwordIcon() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/></svg>;
-}
-
-function ShieldIcon() {
-  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
-}
-
-function CrownIcon() {
-  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 20h20M4 20l2-14 4 6 2-8 2 8 4-6 2 14"/></svg>;
 }
 
 function ScrollIcon() {
@@ -98,7 +91,7 @@ function useMouseLight(ref: React.RefObject<HTMLElement | null>) {
   }, [ref]);
 }
 
-export function LobbyPage({ onCreate, onJoin, onBrowseCards }: LobbyPageProps) {
+export function LobbyPage({ onCreate, onJoin, onBrowseCards, onBrowseRules }: LobbyPageProps) {
   const [name, setName] = useState(localStorage.getItem("history-player-name") ?? "");
   const [code, setCode] = useState("");
   const [isLoaded, setIsLoaded] = useState(false);
@@ -156,10 +149,10 @@ export function LobbyPage({ onCreate, onJoin, onBrowseCards }: LobbyPageProps) {
             <small className="mt-1 block text-[9px] font-bold uppercase tracking-[.28em] text-white/35">History card game</small>
           </span>
         </a>
-        <div className="hidden items-center gap-8 text-xs font-bold uppercase tracking-[.16em] text-white/45 md:flex">
-          <a className="nav-link transition hover:text-[#e9bd67]" href="#play">Bắt đầu</a>
-          <button type="button" className="nav-link transition hover:text-[#e9bd67]" onClick={onBrowseCards}>Bộ thẻ</button>
-          <a className="nav-link transition hover:text-[#e9bd67]" href="#guide">Luật chơi</a>
+        <div className="nav-menu hidden items-center gap-8 md:flex">
+          <a className="nav-link" href="#play">Bắt đầu</a>
+          <button type="button" className="nav-link" onClick={onBrowseCards}>Bộ thẻ</button>
+          <button type="button" className="nav-link" onClick={onBrowseRules}>Luật chơi</button>
         </div>
         <span className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[.14em] text-emerald-300/80">
           <i className="online-dot h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]" /> Trực tuyến
@@ -235,42 +228,11 @@ export function LobbyPage({ onCreate, onJoin, onBrowseCards }: LobbyPageProps) {
             <span><small>Muốn xem trước?</small><strong>Khám phá bộ thẻ hiện có</strong></span>
             <ArrowIcon />
           </button>
+          <button type="button" onClick={onBrowseRules} className="browse-rules-btn">
+            Xem luật chơi <ArrowIcon />
+          </button>
         </section>
       </div>
-
-      {/* Rules section */}
-      <section id="guide" className="rules-section relative z-[1] mx-auto w-full max-w-[1440px] px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
-        <div className="rules-heading mx-auto max-w-2xl text-center">
-          <p className="text-[10px] font-bold uppercase tracking-[.26em] text-[#d9aa54]">Cẩm nang nhà sử học</p>
-          <h2 className="mt-3 text-3xl font-extrabold leading-tight text-[#f5e8ca] sm:text-5xl">Luật chơi</h2>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-400 sm:text-base">Ai loại bỏ hết thẻ trên tay trước sẽ chiến thắng. Muốn làm được điều đó, bạn phải đặt đúng các sự kiện vào dòng thời gian.</p>
-        </div>
-
-        <div className="rules-timeline mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {[
-            ["01", "Nhận thẻ bí mật", "Mỗi người nhận các thẻ sự kiện chưa lộ năm. Một thẻ gốc được đặt sẵn để bắt đầu dòng thời gian.", ScrollIcon],
-            ["02", "Chọn đúng vị trí", "Đến lượt, chọn một thẻ trên tay rồi đặt nó vào khe trước, sau hoặc giữa các mốc đã có.", ShieldIcon],
-            ["03", "Thách đấu đối thủ", "Bạn có thể khui thẻ vừa được đặt. Nếu vị trí sai, người đặt phải bốc thêm một thẻ phạt.", SwordIcon],
-            ["04", "Viết nên chiến thắng", "Đặt đúng thẻ và trở thành người đầu tiên không còn lá bài nào trên tay để giành chiến thắng.", CrownIcon],
-          ].map(([number, title, description, Icon], index) => (
-            <article key={number as string} className="rule-card" style={{ animationDelay: `${index * 110}ms` }}>
-              <div className="rule-card-glow" />
-              <div className="rule-card-top">
-                <span className="rule-icon">{(Icon as React.FC)({})}</span>
-                <span className="rule-number">{number as string}</span>
-              </div>
-              <h3>{title as string}</h3>
-              <p>{description as string}</p>
-              <div className="rule-card-border-glow" />
-            </article>
-          ))}
-        </div>
-
-        <div className="rules-note mt-6 flex flex-col items-center justify-between gap-4 px-5 py-4 text-center sm:flex-row sm:text-left">
-          <div><strong>Đồng hồ mỗi lượt</strong><span className="mt-1 block text-sm text-slate-400">Tối đa 7 thẻ: 15 giây · 8–16 thẻ: 25 giây · Từ 17 thẻ: 35 giây. Khui thẻ được cộng thêm 3 giây; hết giờ chỉ mất lượt.</span></div>
-          <a href="#play" className="rules-cta">Bắt đầu chơi <ArrowIcon /></a>
-        </div>
-      </section>
 
       <aside className="homepage-disclaimer library-disclaimer" aria-label="Lưu ý về nội dung">
         <span className="library-disclaimer-mark" aria-hidden="true">i</span>
