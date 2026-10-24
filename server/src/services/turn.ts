@@ -13,29 +13,29 @@ const isIceServer = (value: unknown): value is IceServer => {
     || (Array.isArray(urls) && urls.length > 0 && urls.every((url) => typeof url === "string"));
 };
 
-export const generateIceServers = async (): Promise<IceServer[]> => {
-  if (!env.cloudflareTurnKeyId || !env.cloudflareTurnApiToken) return env.iceServers;
+export const getIceServers = async (): Promise<IceServer[]> => {
+  if (!env.meteredTurnDomain || !env.meteredTurnApiKey) return env.iceServers;
 
   try {
-    const response = await fetch(
-      `https://rtc.live.cloudflare.com/v1/turn/keys/${encodeURIComponent(env.cloudflareTurnKeyId)}/credentials/generate-ice-servers`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${env.cloudflareTurnApiToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ttl: env.turnCredentialTtlSeconds }),
-      },
-    );
+    const domain = env.meteredTurnDomain
+      .trim()
+      .replace(/^https?:\/\//i, "")
+      .replace(/\/$/, "");
+    if (!/^[a-z0-9.-]+\.metered\.live$/i.test(domain))
+      throw new Error("METERED_TURN_DOMAIN không hợp lệ");
 
-    if (!response.ok) throw new Error(`Cloudflare TURN trả về HTTP ${response.status}`);
-    const payload = await response.json() as { iceServers?: unknown };
-    if (!Array.isArray(payload.iceServers) || !payload.iceServers.every(isIceServer))
-      throw new Error("Cloudflare TURN trả về cấu hình ICE không hợp lệ");
-    return payload.iceServers;
+    const endpoint = new URL(`https://${domain}/api/v1/turn/credentials`);
+    endpoint.searchParams.set("apiKey", env.meteredTurnApiKey);
+    endpoint.searchParams.set("region", env.meteredTurnRegion);
+    const response = await fetch(endpoint);
+
+    if (!response.ok) throw new Error(`Metered TURN trả về HTTP ${response.status}`);
+    const payload = await response.json() as unknown;
+    if (!Array.isArray(payload) || !payload.every(isIceServer))
+      throw new Error("Metered TURN trả về cấu hình ICE không hợp lệ");
+    return payload;
   } catch (error) {
-    console.error("Không thể tạo Cloudflare TURN credential, chuyển sang STUN:", error);
+    console.error("Không thể tải Metered TURN credential, chuyển sang STUN:", error);
     return env.iceServers;
   }
 };

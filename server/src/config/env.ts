@@ -12,11 +12,6 @@ const parsePort = (value: string | undefined): number => {
   return port;
 };
 
-const parsePositiveInteger = (value: string | undefined, fallback: number): number => {
-  const parsed = Number(value ?? fallback);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
-};
-
 export const env = {
   mongoUri: process.env.MONGO_URI ?? "",
   port: process.env.VERCEL ? 3000 : parsePort(process.env.PORT),
@@ -39,9 +34,9 @@ export const env = {
         }]
       : []),
   ],
-  cloudflareTurnKeyId: process.env.CLOUDFLARE_TURN_KEY_ID ?? "",
-  cloudflareTurnApiToken: process.env.CLOUDFLARE_TURN_API_TOKEN ?? "",
-  turnCredentialTtlSeconds: parsePositiveInteger(process.env.TURN_CREDENTIAL_TTL_SECONDS, 86_400),
+  meteredTurnDomain: process.env.METERED_TURN_DOMAIN ?? "",
+  meteredTurnApiKey: process.env.METERED_TURN_API_KEY ?? "",
+  meteredTurnRegion: process.env.METERED_TURN_REGION ?? "global",
 };
 
 export const requireMongoUri = (): string => {

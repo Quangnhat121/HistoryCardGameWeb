@@ -11,6 +11,9 @@ Repo này được deploy thành **hai Vercel Project** dùng chung một Git re
 
    - `MONGO_URI`: chuỗi kết nối MongoDB Atlas.
    - `CLIENT_ORIGIN`: URL frontend, không có dấu `/` cuối. Có thể khai báo nhiều URL cách nhau bằng dấu phẩy.
+   - `METERED_TURN_DOMAIN`: domain trong Metered Developers, ví dụ `your-app.metered.live`.
+   - `METERED_TURN_API_KEY`: API key của TURN credential trong Metered Dashboard.
+   - `METERED_TURN_REGION`: đặt `global` để tự chọn TURN server phù hợp.
 
 5. Bật **Fluid Compute** trong Settings → Functions nếu project Vercel cũ chưa bật.
 6. Deploy và kiểm tra `https://<backend-domain>/health` trả về `{ "status": "ok" }`.
