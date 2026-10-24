@@ -14,6 +14,7 @@ interface WaitingRoomPageProps {
 
 export function WaitingRoomPage({ room, speakingPlayerIds, onStart, onLeave }: WaitingRoomPageProps) {
   const [copied, setCopied] = useState(false);
+  const [showRoomCode, setShowRoomCode] = useState(true);
   const previousPlayerCount = useRef(room.players.length);
   const isHost = room.hostId === room.selfPlayerId;
   const canStart = room.players.length >= 2 && room.players.length <= 4 && room.players.every((player) => player.connected);
@@ -47,10 +48,29 @@ export function WaitingRoomPage({ room, speakingPlayerIds, onStart, onLeave }: W
       <section className="rounded-3xl border border-white/10 bg-panel/90 p-6 text-center shadow-2xl sm:p-10">
         <p className="text-xs font-bold uppercase tracking-[0.3em] text-gold">Phòng chờ</p>
         <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-normal text-parchment">Mời đồng đội tham gia</h1>
-        <button onClick={() => void copyCode()} className="group mx-auto mt-6 flex items-center gap-3 rounded-2xl border border-gold/25 bg-gold/10 px-5 py-3 transition hover:bg-gold/15">
-          <span className="font-mono text-3xl font-black tracking-[0.25em] text-amber-200">{room.code}</span>
-          <span className="text-xs text-gold">{copied ? "Đã chép!" : "Sao chép"}</span>
-        </button>
+        <div className="mx-auto mt-6 flex w-fit items-stretch gap-2">
+          <button
+            onClick={() => showRoomCode && void copyCode()}
+            aria-label={showRoomCode ? "Sao chép mã phòng" : "Mã phòng đang được ẩn"}
+            className="group flex min-w-[220px] items-center justify-center gap-3 rounded-2xl border border-gold/25 bg-gold/10 px-5 py-3 transition hover:bg-gold/15"
+          >
+            <span className="font-mono text-3xl font-black tracking-[0.25em] text-amber-200">{showRoomCode ? room.code : "•••••"}</span>
+            <span className="text-xs text-gold">{showRoomCode ? (copied ? "Đã chép!" : "Sao chép") : "Đang ẩn"}</span>
+          </button>
+          <button
+            onClick={() => { playClick(); setCopied(false); setShowRoomCode((visible) => !visible); }}
+            aria-label={showRoomCode ? "Ẩn mã phòng" : "Hiện mã phòng"}
+            aria-pressed={!showRoomCode}
+            title={showRoomCode ? "Ẩn mã phòng" : "Hiện mã phòng"}
+            className="flex w-12 items-center justify-center rounded-2xl border border-gold/25 bg-gold/10 text-gold transition hover:bg-gold/15"
+          >
+            {showRoomCode ? (
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="2.5" /></svg>
+            ) : (
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-current" strokeWidth="1.8"><path d="M3 3l18 18M10.6 6.1A9.7 9.7 0 0 1 12 6c6 0 9.5 6 9.5 6a15 15 0 0 1-2.1 2.8M6.2 6.3C3.8 8 2.5 12 2.5 12s3.5 6 9.5 6a9.8 9.8 0 0 0 3-.5M9.9 9.9a3 3 0 0 0 4.2 4.2" /></svg>
+            )}
+          </button>
+        </div>
 
         <div className="my-8 space-y-3 text-left">
           {room.players.map((player) => {

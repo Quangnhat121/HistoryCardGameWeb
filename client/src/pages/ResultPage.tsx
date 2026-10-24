@@ -3,7 +3,15 @@ import { Button } from "../components/Button";
 import { playDefeat, playVictory } from "../sounds";
 import { AntigravityCanvas } from "../components/AntigravityCanvas";
 
-export function ResultPage({ winnerName, isSelf, onLobby }: { winnerName: string; isSelf: boolean; onLobby: () => void }) {
+interface ResultPageProps {
+  winnerName: string;
+  isSelf: boolean;
+  isHost: boolean;
+  onRematch: () => void;
+  onLeave: () => void;
+}
+
+export function ResultPage({ winnerName, isSelf, isHost, onRematch, onLeave }: ResultPageProps) {
   useEffect(() => {
     if (isSelf) playVictory();
     else playDefeat();
@@ -41,8 +49,13 @@ export function ResultPage({ winnerName, isSelf, onLobby }: { winnerName: string
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-gold/30 bg-gold/10 text-4xl">♛</div>
         <p className="mt-6 text-xs font-black uppercase tracking-[0.3em] text-gold">Ván chơi kết thúc</p>
         <h1 className="mt-3 break-words text-4xl font-black leading-tight tracking-normal text-parchment">{isSelf ? "Bạn chiến thắng!" : `${winnerName} chiến thắng!`}</h1>
-        <p className="mt-3 text-sm text-slate-400">Một hành trình xuyên lịch sử vừa khép lại.</p>
-        <Button onClick={onLobby} className="mt-8 w-full py-3.5">Về sảnh</Button>
+        <p className="mt-3 text-sm text-slate-400">{isHost ? "Đưa mọi người về phòng chờ để bắt đầu ván mới." : "Bạn vẫn ở trong phòng. Hãy chờ chủ phòng mở ván tiếp theo."}</p>
+        {isHost ? (
+          <Button onClick={onRematch} className="mt-8 w-full py-3.5">Về phòng chờ</Button>
+        ) : (
+          <div className="mt-8 rounded-xl border border-gold/15 bg-black/20 p-3 text-sm text-slate-400">Đang chờ chủ phòng...</div>
+        )}
+        <Button onClick={onLeave} variant="danger" className="mt-3 w-full">Rời phòng</Button>
       </section>
     </main>
   );

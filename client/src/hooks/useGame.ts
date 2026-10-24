@@ -24,6 +24,15 @@ export const useGame = () => {
     const onReconnectAttempt = () => setReconnecting(true);
     const onRoomUpdate = (nextRoom: RoomState) => {
       rememberSession(nextRoom.selfPlayerId, nextRoom.code);
+      if (!nextRoom.started) {
+        if (delayedStateTimerRef.current !== null) window.clearTimeout(delayedStateTimerRef.current);
+        delayedStateTimerRef.current = null;
+        pendingChallengeRef.current = null;
+        setGame(null);
+        setWinnerName(null);
+        setChallengeVisual(null);
+        setTurnTimeoutNotice(null);
+      }
       setRoom(nextRoom);
     };
     const onGameState = (incomingState: GameState) => {
@@ -95,6 +104,7 @@ export const useGame = () => {
   const createRoom = (name: string) => socket.emit("room:create", { name });
   const joinRoom = (code: string, name: string) => socket.emit("room:join", { code, name });
   const startGame = () => socket.emit("room:start");
+  const returnToRoom = () => socket.emit("room:rematch");
   const placeCard = (cardId: number, index: number) => socket.emit("game:place", { cardId, index });
   const challenge = (cardId: number) => socket.emit("game:challenge", { cardId });
   const skipChallenge = () => socket.emit("game:skipChallenge");
@@ -111,6 +121,6 @@ export const useGame = () => {
   return {
     room, game, winnerName, challengeVisual, turnTimeoutNotice, error,
     connected, reconnecting, createRoom, joinRoom, startGame,
-    placeCard, challenge, skipChallenge, leaveRoom,
+    returnToRoom, placeCard, challenge, skipChallenge, leaveRoom,
   };
 };

@@ -17,6 +17,7 @@ export default function App() {
   const [pageHash, setPageHash] = useState(() => window.location.hash);
   const [speakingPlayerIds, setSpeakingPlayerIds] = useState<string[]>([]);
   const selfName = game.room?.players.find((player) => player.playerId === game.room?.selfPlayerId)?.name;
+  const isHost = game.room?.hostId === game.room?.selfPlayerId;
   const musicMode = game.room?.started && game.game ? "game" : "home";
 
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function App() {
       : <LobbyPage onCreate={game.createRoom} onJoin={game.joinRoom} onBrowseCards={openCards} onBrowseRules={openRules} />;
   if (game.room && !game.room.started) page = <WaitingRoomPage room={game.room} speakingPlayerIds={speakingPlayerIds} onStart={game.startGame} onLeave={game.leaveRoom} />;
   if (game.room?.started && game.game) page = <GamePage room={game.room} game={game.game} timeoutNotice={game.turnTimeoutNotice} speakingPlayerIds={speakingPlayerIds} onPlace={game.placeCard} onChallenge={game.challenge} onSkipChallenge={game.skipChallenge} />;
-  if (game.winnerName) page = <ResultPage winnerName={game.winnerName} isSelf={game.winnerName === selfName} onLobby={game.leaveRoom} />;
+  if (game.winnerName) page = <ResultPage winnerName={game.winnerName} isSelf={game.winnerName === selfName} isHost={isHost} onRematch={game.returnToRoom} onLeave={game.leaveRoom} />;
 
   return (
     <div className="min-h-screen bg-ink text-white">
@@ -49,7 +50,7 @@ export default function App() {
       {game.error && <div className="fixed right-3 top-12 z-[90] max-w-sm rounded-xl border border-red-400/30 bg-red-950/95 px-4 py-3 text-sm text-red-100 shadow-xl">{game.error}</div>}
       {page}
       <ChallengeOverlay result={game.challengeVisual} />
-      {game.room && !game.winnerName && <VoiceChat room={game.room} onSpeakingPlayersChange={setSpeakingPlayerIds} />}
+      {game.room && <VoiceChat room={game.room} onSpeakingPlayersChange={setSpeakingPlayerIds} />}
       <SoundToggle />
     </div>
   );

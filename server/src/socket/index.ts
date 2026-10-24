@@ -231,7 +231,11 @@ const reconnectFromHandshake = (io: Server, socket: Socket<any, any, any, Socket
   socket.data = { roomCode: room.code, playerId: player.playerId };
   void socket.join(room.code);
   emitRoomUpdate(io, room);
-  if (room.engine) socket.emit("game:state", viewFor(room.engine.state, player.playerId));
+  if (room.engine) {
+    socket.emit("game:state", viewFor(room.engine.state, player.playerId));
+    const winner = room.players.find((entry) => entry.playerId === room.engine?.state.winner);
+    if (winner) socket.emit("game:over", { winnerName: winner.name });
+  }
 };
 
 export const createSocketServer = (httpServer: HttpServer): Server => {
@@ -305,6 +309,21 @@ export const createSocketServer = (httpServer: HttpServer): Server => {
         emitRoomUpdate(io, room);
         emitGameStates(io, room);
         scheduleTurnTimeout(io, room);
+      } catch (error) { socket.emit("error", { message: errorMessage(error) }); }
+    });
+
+    socket.on("room:rematch", () => {
+      try {
+        const { room, player } = getRoomMembership(socket);
+        if (room.hostId !== player.playerId) throw new Error("Chỉ chủ phòng được mở ván tiếp theo");
+        if (!room.engine || room.engine.state.phase !== "finished") throw new Error("Ván chơi chưa kết thúc");
+
+        if (room.turnTimer) clearTimeout(room.turnTimer);
+        room.turnTimer = undefined;
+        room.engine = null;
+        room.startedAt = null;
+        room.recordSaved = false;
+        emitRoomUpdate(io, room);
       } catch (error) { socket.emit("error", { message: errorMessage(error) }); }
     });
 
