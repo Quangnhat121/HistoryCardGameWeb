@@ -17,7 +17,7 @@ export default function App() {
   const [pageHash, setPageHash] = useState(() => window.location.hash);
   const [speakingPlayerIds, setSpeakingPlayerIds] = useState<string[]>([]);
   const selfName = game.room?.players.find((player) => player.playerId === game.room?.selfPlayerId)?.name;
-  const isHost = game.room?.hostId === game.room?.selfPlayerId;
+  const selfReturned = game.room?.players.find((player) => player.playerId === game.room?.selfPlayerId)?.returnedToRoom === true;
   const musicMode = game.room?.started && game.game ? "game" : "home";
 
   useEffect(() => {
@@ -40,9 +40,9 @@ export default function App() {
     : pageHash === "#rules"
       ? <RulesPage onBack={closeCards} onBrowseCards={openCards} />
       : <LobbyPage onCreate={game.createRoom} onJoin={game.joinRoom} onBrowseCards={openCards} onBrowseRules={openRules} />;
-  if (game.room && !game.room.started) page = <WaitingRoomPage room={game.room} speakingPlayerIds={speakingPlayerIds} onStart={game.startGame} onLeave={game.leaveRoom} />;
-  if (game.room?.started && game.game) page = <GamePage room={game.room} game={game.game} timeoutNotice={game.turnTimeoutNotice} speakingPlayerIds={speakingPlayerIds} onPlace={game.placeCard} onChallenge={game.challenge} onSkipChallenge={game.skipChallenge} />;
-  if (game.winnerName) page = <ResultPage winnerName={game.winnerName} isSelf={game.winnerName === selfName} isHost={isHost} onRematch={game.returnToRoom} onLeave={game.leaveRoom} />;
+  if (game.room && (!game.room.started || selfReturned)) page = <WaitingRoomPage room={game.room} speakingPlayerIds={speakingPlayerIds} onStart={game.startGame} onLeave={game.leaveRoom} />;
+  if (game.room?.started && game.game && !selfReturned) page = <GamePage room={game.room} game={game.game} timeoutNotice={game.turnTimeoutNotice} speakingPlayerIds={speakingPlayerIds} onPlace={game.placeCard} onChallenge={game.challenge} onSkipChallenge={game.skipChallenge} />;
+  if (game.winnerName && !selfReturned) page = <ResultPage winnerName={game.winnerName} isSelf={game.winnerName === selfName} onRematch={game.returnToRoom} onLeave={game.leaveRoom} />;
 
   return (
     <div className="min-h-screen bg-ink text-white">

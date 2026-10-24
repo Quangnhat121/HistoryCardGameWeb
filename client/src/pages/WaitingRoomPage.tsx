@@ -17,7 +17,7 @@ export function WaitingRoomPage({ room, speakingPlayerIds, onStart, onLeave }: W
   const [showRoomCode, setShowRoomCode] = useState(true);
   const previousPlayerCount = useRef(room.players.length);
   const isHost = room.hostId === room.selfPlayerId;
-  const canStart = room.players.length >= 2 && room.players.length <= 4 && room.players.every((player) => player.connected);
+  const canStart = !room.started && room.players.length >= 2 && room.players.length <= 4 && room.players.every((player) => player.connected);
 
   useEffect(() => {
     if (room.players.length > previousPlayerCount.current) playPlayerJoin();
@@ -75,12 +75,12 @@ export function WaitingRoomPage({ room, speakingPlayerIds, onStart, onLeave }: W
         <div className="my-8 space-y-3 text-left">
           {room.players.map((player) => {
             const speaking = speakingPlayerIds.includes(player.playerId);
-            return <div key={player.playerId} className={`voice-participant flex items-center rounded-xl border border-white/5 bg-black/20 px-4 py-3 ${speaking ? "is-speaking" : ""}`}><span className={`mr-3 h-2.5 w-2.5 rounded-full ${speaking ? "voice-speaking-dot" : player.connected ? "bg-emerald-400" : "bg-slate-600"}`} /><span className="flex-1 font-semibold text-slate-200">{player.name}{player.playerId === room.selfPlayerId ? " (Bạn)" : ""}</span>{speaking && <SpeakingIndicator />}{player.playerId === room.hostId && <span className="ml-2 rounded-full bg-gold/15 px-2 py-1 text-[10px] font-bold uppercase text-gold">Chủ phòng</span>}</div>;
+            return <div key={player.playerId} className={`voice-participant flex items-center rounded-xl border border-white/5 bg-black/20 px-4 py-3 ${speaking ? "is-speaking" : ""}`}><span className={`mr-3 h-2.5 w-2.5 rounded-full ${speaking ? "voice-speaking-dot" : player.connected ? "bg-emerald-400" : "bg-slate-600"}`} /><span className="flex-1 font-semibold text-slate-200">{player.name}{player.playerId === room.selfPlayerId ? " (Bạn)" : ""}</span>{speaking && <SpeakingIndicator />}{room.started && <span className="ml-2 min-w-12 text-center text-xs font-bold text-slate-400">{player.returnedToRoom ? "Đã về" : "..."}</span>}{player.playerId === room.hostId && <span className="ml-2 rounded-full bg-gold/15 px-2 py-1 text-[10px] font-bold uppercase text-gold">Chủ phòng</span>}</div>;
           })}
           {Array.from({ length: 4 - room.players.length }).map((_, index) => <div key={index} className="rounded-xl border border-dashed border-white/10 px-4 py-3 text-sm text-slate-600">Đang chờ người chơi...</div>)}
         </div>
 
-        {isHost ? <Button onClick={onStart} disabled={!canStart} className="w-full py-3.5">Bắt đầu ({room.players.length}/4)</Button> : <p className="rounded-xl bg-black/20 p-3 text-sm text-slate-400">Đang chờ chủ phòng bắt đầu...</p>}
+        {room.started ? <p className="rounded-xl bg-black/20 p-3 text-sm text-slate-400">Đang chờ các thành viên còn lại về phòng...</p> : isHost ? <Button onClick={onStart} disabled={!canStart} className="w-full py-3.5">Bắt đầu ({room.players.length}/4)</Button> : <p className="rounded-xl bg-black/20 p-3 text-sm text-slate-400">Đang chờ chủ phòng bắt đầu...</p>}
         <Button onClick={onLeave} variant="danger" className="mt-3 w-full">Rời phòng</Button>
       </section>
     </main>

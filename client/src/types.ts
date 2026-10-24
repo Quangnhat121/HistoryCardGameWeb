@@ -50,6 +50,7 @@ export interface RoomPlayer {
   playerId: string;
   name: string;
   connected: boolean;
+  returnedToRoom: boolean;
 }
 
 export interface RoomState {

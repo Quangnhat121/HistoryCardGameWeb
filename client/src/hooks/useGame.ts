@@ -24,7 +24,8 @@ export const useGame = () => {
     const onReconnectAttempt = () => setReconnecting(true);
     const onRoomUpdate = (nextRoom: RoomState) => {
       rememberSession(nextRoom.selfPlayerId, nextRoom.code);
-      if (!nextRoom.started) {
+      const selfReturned = nextRoom.players.find((player) => player.playerId === nextRoom.selfPlayerId)?.returnedToRoom === true;
+      if (!nextRoom.started || selfReturned) {
         if (delayedStateTimerRef.current !== null) window.clearTimeout(delayedStateTimerRef.current);
         delayedStateTimerRef.current = null;
         pendingChallengeRef.current = null;

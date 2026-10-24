@@ -17,6 +17,7 @@ interface RoomPlayer {
   name: string;
   socketId: string | null;
   connected: boolean;
+  returnedToRoom: boolean;
   disconnectTimer?: NodeJS.Timeout;
 }
 
@@ -125,9 +126,19 @@ const emitRoomUpdate = (io: Server, room: GameRoom): void => {
       hostId: room.hostId,
       selfPlayerId: player.playerId,
       started: room.engine !== null,
-      players: room.players.map(({ playerId, name, connected }) => ({ playerId, name, connected })),
+      players: room.players.map(({ playerId, name, connected, returnedToRoom }) => ({ playerId, name, connected, returnedToRoom })),
     });
   }
+};
+
+const resetFinishedRoom = (io: Server, room: GameRoom): void => {
+  if (room.turnTimer) clearTimeout(room.turnTimer);
+  room.turnTimer = undefined;
+  room.engine = null;
+  room.startedAt = null;
+  room.recordSaved = false;
+  room.players.forEach((player) => { player.returnedToRoom = false; });
+  emitRoomUpdate(io, room);
 };
 
 const emitGameStates = (io: Server, room: GameRoom): void => {
@@ -151,6 +162,10 @@ const removePlayer = (io: Server, room: GameRoom, playerId: string): void => {
     return;
   }
   if (room.hostId === playerId) room.hostId = room.players[0].playerId;
+  if (room.engine?.state.phase === "finished" && room.players.every((player) => player.returnedToRoom)) {
+    resetFinishedRoom(io, room);
+    return;
+  }
   room.engine?.resetTurnTimer();
   emitRoomUpdate(io, room);
   emitGameStates(io, room);
@@ -234,7 +249,7 @@ const reconnectFromHandshake = (io: Server, socket: Socket<any, any, any, Socket
   if (room.engine) {
     socket.emit("game:state", viewFor(room.engine.state, player.playerId));
     const winner = room.players.find((entry) => entry.playerId === room.engine?.state.winner);
-    if (winner) socket.emit("game:over", { winnerName: winner.name });
+    if (winner && !player.returnedToRoom) socket.emit("game:over", { winnerName: winner.name });
   }
 };
 
@@ -255,7 +270,7 @@ export const createSocketServer = (httpServer: HttpServer): Server => {
         const room: GameRoom = {
           code,
           engine: null,
-          players: [{ playerId, name, socketId: socket.id, connected: true }],
+          players: [{ playerId, name, socketId: socket.id, connected: true, returnedToRoom: false }],
           hostId: playerId,
           startedAt: null,
           recordSaved: false,
@@ -277,7 +292,7 @@ export const createSocketServer = (httpServer: HttpServer): Server => {
         if (room.engine) throw new Error("Ván chơi đã bắt đầu");
         if (room.players.length >= 4) throw new Error("Phòng đã đủ 4 người");
         const playerId = randomUUID();
-        room.players.push({ playerId, name, socketId: socket.id, connected: true });
+        room.players.push({ playerId, name, socketId: socket.id, connected: true, returnedToRoom: false });
         socket.data = { roomCode: code, playerId };
         await socket.join(code);
         emitRoomUpdate(io, room);
@@ -304,6 +319,7 @@ export const createSocketServer = (httpServer: HttpServer): Server => {
         }
         const engine = new GameEngine();
         engine.createGame(turnOrder, cards);
+        room.players.forEach((entry) => { entry.returnedToRoom = false; });
         room.engine = engine;
         room.startedAt = new Date();
         emitRoomUpdate(io, room);
@@ -315,15 +331,10 @@ export const createSocketServer = (httpServer: HttpServer): Server => {
     socket.on("room:rematch", () => {
       try {
         const { room, player } = getRoomMembership(socket);
-        if (room.hostId !== player.playerId) throw new Error("Chỉ chủ phòng được mở ván tiếp theo");
         if (!room.engine || room.engine.state.phase !== "finished") throw new Error("Ván chơi chưa kết thúc");
-
-        if (room.turnTimer) clearTimeout(room.turnTimer);
-        room.turnTimer = undefined;
-        room.engine = null;
-        room.startedAt = null;
-        room.recordSaved = false;
-        emitRoomUpdate(io, room);
+        player.returnedToRoom = true;
+        if (room.players.every((entry) => entry.returnedToRoom)) resetFinishedRoom(io, room);
+        else emitRoomUpdate(io, room);
       } catch (error) { socket.emit("error", { message: errorMessage(error) }); }
     });
 
