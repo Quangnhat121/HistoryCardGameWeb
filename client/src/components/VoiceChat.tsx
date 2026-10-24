@@ -6,6 +6,11 @@ interface VoiceConfigPayload { iceServers?: RTCIceServer[] }
 interface VoiceDescriptionPayload { fromPlayerId: string; description: RTCSessionDescriptionInit }
 interface VoiceIcePayload { fromPlayerId: string; candidate: RTCIceCandidateInit | null }
 
+interface VoiceChatProps {
+  room: RoomState;
+  onSpeakingPlayersChange: (playerIds: string[]) => void;
+}
+
 const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
   { urls: ["stun:stun.l.google.com:19302", "stun:stun.cloudflare.com:3478"] },
 ];
@@ -39,10 +44,11 @@ function HeadphonesIcon({ off }: { off: boolean }) {
   );
 }
 
-export function VoiceChat({ room }: { room: RoomState }) {
+export function VoiceChat({ room, onSpeakingPlayersChange }: VoiceChatProps) {
   const [muted, setMuted] = useState(false);
   const [deafened, setDeafened] = useState(false);
   const [permissionError, setPermissionError] = useState(false);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStreams, setRemoteStreams] = useState<Record<string, MediaStream>>({});
   const localStreamRef = useRef<MediaStream | null>(null);
   const peersRef = useRef(new Map<string, RTCPeerConnection>());
@@ -64,6 +70,66 @@ export function VoiceChat({ room }: { room: RoomState }) {
     }
     if (localStreamRef.current) socket.emit("voice:ready");
   }, [room.players]);
+
+  useEffect(() => {
+    const streams: Array<[string, MediaStream]> = [
+      ...(!muted && localStream ? [[room.selfPlayerId, localStream] as [string, MediaStream]] : []),
+      ...Object.entries(remoteStreams),
+    ].filter(([, stream]) => stream.getAudioTracks().some((track) => track.readyState === "live"));
+
+    if (streams.length === 0) {
+      onSpeakingPlayersChange([]);
+      return;
+    }
+
+    const audioContext = new AudioContext();
+    const monitors = streams.map(([playerId, stream]) => {
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.65;
+      source.connect(analyser);
+      return { playerId, source, analyser, samples: new Uint8Array(analyser.fftSize) };
+    });
+    const lastActiveAt = new Map<string, number>();
+    let frameId = 0;
+    let previousSignature = "";
+
+    const measure = () => {
+      const now = performance.now();
+      const speakingPlayerIds: string[] = [];
+
+      for (const monitor of monitors) {
+        monitor.analyser.getByteTimeDomainData(monitor.samples);
+        let energy = 0;
+        for (const sample of monitor.samples) {
+          const normalized = (sample - 128) / 128;
+          energy += normalized * normalized;
+        }
+        const rms = Math.sqrt(energy / monitor.samples.length);
+        if (rms >= 0.035) lastActiveAt.set(monitor.playerId, now);
+        if (now - (lastActiveAt.get(monitor.playerId) ?? 0) < 320)
+          speakingPlayerIds.push(monitor.playerId);
+      }
+
+      speakingPlayerIds.sort();
+      const signature = speakingPlayerIds.join(",");
+      if (signature !== previousSignature) {
+        previousSignature = signature;
+        onSpeakingPlayersChange(speakingPlayerIds);
+      }
+      frameId = requestAnimationFrame(measure);
+    };
+
+    void audioContext.resume();
+    frameId = requestAnimationFrame(measure);
+    return () => {
+      cancelAnimationFrame(frameId);
+      monitors.forEach(({ source }) => source.disconnect());
+      void audioContext.close();
+      onSpeakingPlayersChange([]);
+    };
+  }, [localStream, muted, onSpeakingPlayersChange, remoteStreams, room.selfPlayerId]);
 
   useEffect(() => {
     let disposed = false;
@@ -129,6 +195,7 @@ export function VoiceChat({ room }: { room: RoomState }) {
           return;
         }
         localStreamRef.current = stream;
+        setLocalStream(stream);
         setPermissionError(false);
         socket.emit("voice:ready");
         for (const player of playersRef.current) {
@@ -188,6 +255,7 @@ export function VoiceChat({ room }: { room: RoomState }) {
       socket.off("voice:left", onLeft);
       localStreamRef.current?.getTracks().forEach((track) => track.stop());
       localStreamRef.current = null;
+      setLocalStream(null);
       peersRef.current.forEach((peer) => peer.close());
       peersRef.current.clear();
       queuedIceRef.current.clear();

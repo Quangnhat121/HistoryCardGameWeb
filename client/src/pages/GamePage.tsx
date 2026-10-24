@@ -15,9 +15,10 @@ interface GamePageProps {
   onChallenge: (cardId: number) => void;
   onSkipChallenge: () => void;
   timeoutNotice: string | null;
+  speakingPlayerIds: string[];
 }
 
-export function GamePage({ room, game, timeoutNotice, onPlace, onChallenge, onSkipChallenge }: GamePageProps) {
+export function GamePage({ room, game, timeoutNotice, speakingPlayerIds, onPlace, onChallenge, onSkipChallenge }: GamePageProps) {
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [selectedChallengeId, setSelectedChallengeId] = useState<number | null>(null);
@@ -69,7 +70,7 @@ export function GamePage({ room, game, timeoutNotice, onPlace, onChallenge, onSk
       <TurnTimer deadline={game.turnDeadline} durationMs={game.turnDurationMs} playerName={currentPlayerName} />
       {timeoutNotice && <div className="timeout-toast" role="status"><span>⌛</span>{timeoutNotice}</div>}
 
-      <PlayerBar players={game.players} currentPlayerId={game.currentPlayerId} selfPlayerId={room.selfPlayerId} drawPileCount={game.drawPileCount} />
+      <PlayerBar players={game.players} currentPlayerId={game.currentPlayerId} selfPlayerId={room.selfPlayerId} drawPileCount={game.drawPileCount} speakingPlayerIds={speakingPlayerIds} />
 
       <section className="mt-4 rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_center,rgba(58,74,62,.7),rgba(12,17,18,.95)_70%)] p-3 shadow-2xl sm:p-5">
         <div className="mb-4 flex items-center justify-between">

@@ -3,8 +3,16 @@ import type { RoomState } from "../types";
 import { Button } from "../components/Button";
 import { playClick, playPlayerJoin } from "../sounds";
 import { AntigravityCanvas } from "../components/AntigravityCanvas";
+import { SpeakingIndicator } from "../components/SpeakingIndicator";
 
-export function WaitingRoomPage({ room, onStart, onLeave }: { room: RoomState; onStart: () => void; onLeave: () => void }) {
+interface WaitingRoomPageProps {
+  room: RoomState;
+  speakingPlayerIds: string[];
+  onStart: () => void;
+  onLeave: () => void;
+}
+
+export function WaitingRoomPage({ room, speakingPlayerIds, onStart, onLeave }: WaitingRoomPageProps) {
   const [copied, setCopied] = useState(false);
   const previousPlayerCount = useRef(room.players.length);
   const isHost = room.hostId === room.selfPlayerId;
@@ -45,7 +53,10 @@ export function WaitingRoomPage({ room, onStart, onLeave }: { room: RoomState; o
         </button>
 
         <div className="my-8 space-y-3 text-left">
-          {room.players.map((player) => <div key={player.playerId} className="flex items-center rounded-xl border border-white/5 bg-black/20 px-4 py-3"><span className={`mr-3 h-2.5 w-2.5 rounded-full ${player.connected ? "bg-emerald-400" : "bg-slate-600"}`} /><span className="flex-1 font-semibold text-slate-200">{player.name}{player.playerId === room.selfPlayerId ? " (Bạn)" : ""}</span>{player.playerId === room.hostId && <span className="rounded-full bg-gold/15 px-2 py-1 text-[10px] font-bold uppercase text-gold">Chủ phòng</span>}</div>)}
+          {room.players.map((player) => {
+            const speaking = speakingPlayerIds.includes(player.playerId);
+            return <div key={player.playerId} className={`voice-participant flex items-center rounded-xl border border-white/5 bg-black/20 px-4 py-3 ${speaking ? "is-speaking" : ""}`}><span className={`mr-3 h-2.5 w-2.5 rounded-full ${speaking ? "voice-speaking-dot" : player.connected ? "bg-emerald-400" : "bg-slate-600"}`} /><span className="flex-1 font-semibold text-slate-200">{player.name}{player.playerId === room.selfPlayerId ? " (Bạn)" : ""}</span>{speaking && <SpeakingIndicator />}{player.playerId === room.hostId && <span className="ml-2 rounded-full bg-gold/15 px-2 py-1 text-[10px] font-bold uppercase text-gold">Chủ phòng</span>}</div>;
+          })}
           {Array.from({ length: 4 - room.players.length }).map((_, index) => <div key={index} className="rounded-xl border border-dashed border-white/10 px-4 py-3 text-sm text-slate-600">Đang chờ người chơi...</div>)}
         </div>
 

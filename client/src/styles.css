@@ -41,6 +41,15 @@ h1, h2, h3, p, span, strong, button, input { text-rendering: optimizeLegibility;
 .voice-status { position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border: 1px solid #18201d; border-radius: 50%; background: #34d399; box-shadow: 0 0 7px rgba(52,211,153,.75); }
 .voice-status[data-error] { background: #f87171; box-shadow: 0 0 7px rgba(248,113,113,.75); }
 .voice-controls audio { display: none; }
+.voice-participant { position: relative; transition: border-color .18s ease, background .18s ease, box-shadow .18s ease, color .18s ease; }
+.voice-participant.is-speaking { border-color: rgba(52,211,153,.9) !important; color: #d1fae5 !important; background: rgba(16,185,129,.13) !important; box-shadow: 0 0 0 1px rgba(52,211,153,.2), 0 0 25px rgba(52,211,153,.32) !important; animation: voice-speaker-pulse 1.05s ease-in-out infinite; }
+.voice-speaking-dot { background: #34d399; box-shadow: 0 0 0 4px rgba(52,211,153,.14), 0 0 12px rgba(52,211,153,.85); }
+.voice-speaking-indicator { display: inline-flex; height: 17px; align-items: center; gap: 2px; margin-left: 9px; color: #6ee7b7; }
+.voice-speaking-indicator i { display: block; width: 2px; height: 5px; border-radius: 999px; background: currentColor; animation: voice-speaking-bar .62s ease-in-out infinite alternate; }
+.voice-speaking-indicator i:nth-child(2) { height: 11px; animation-delay: -.31s; }
+.voice-speaking-indicator i:nth-child(3) { height: 7px; animation-delay: -.15s; }
+@keyframes voice-speaker-pulse { 50% { box-shadow: 0 0 0 2px rgba(52,211,153,.25), 0 0 34px rgba(52,211,153,.44); } }
+@keyframes voice-speaking-bar { to { transform: scaleY(1.65); opacity: .72; } }
 @media (max-width: 640px) { .voice-controls { bottom: 76px; left: 10px; } }
 
 /* ═══════════════════════════════════════════════════════════════════
