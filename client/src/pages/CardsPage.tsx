@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { AsciiReveal } from "ascii-reveal";
 import { assetUrl, SERVER_URL, thumbnailAssetUrl } from "../socket";
 import type { CardFront } from "../types";
 
@@ -230,37 +231,45 @@ export function CardsPage({ onBack }: CardsPageProps) {
         )}
 
         {!loading && !error && filteredCards.length > 0 && (
-          <div className="library-grid">
-            {filteredCards.map((card, index) => (
-              <article
-                key={card.cardId}
-                className="library-card"
-                style={
-                  {
-                    "--delay": `${Math.min(index, 15) * 35}ms`,
-                  } as React.CSSProperties
-                }
-              >
-                <button
-                  type="button"
-                  onClick={() => setSelectedCard(card)}
-                  aria-label={`Xem lớn thẻ ${card.event}`}
+          <AsciiReveal
+            className="library-ascii-reveal"
+            preset="dither"
+            origin="center"
+            duration="cinematic"
+          >
+            <div className="library-grid">
+              {filteredCards.map((card) => (
+                <article
+                  key={card.cardId}
+                  className="library-card"
+                  data-ascii="surface"
                 >
-                  <span className="library-card-number">
-                    #{String(card.cardId).padStart(2, "0")}
-                  </span>
-                  <span className="library-card-image">
-                    <img src={thumbnailAssetUrl(card.image)} alt="" loading="lazy" />
-                  </span>
-                  <span className="library-card-copy">
-                    <small>Sự kiện lịch sử</small>
-                    <strong>{card.event}</strong>
-                    <i>Xem chi tiết →</i>
-                  </span>
-                </button>
-              </article>
-            ))}
-          </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCard(card)}
+                    aria-label={`Xem lớn thẻ ${card.event}`}
+                  >
+                    <span className="library-card-number">
+                      #{String(card.cardId).padStart(2, "0")}
+                    </span>
+                    <span className="library-card-image">
+                      <img
+                        src={thumbnailAssetUrl(card.image)}
+                        alt=""
+                        loading="lazy"
+                        crossOrigin="anonymous"
+                      />
+                    </span>
+                    <span className="library-card-copy">
+                      <small>Sự kiện lịch sử</small>
+                      <strong>{card.event}</strong>
+                      <i>Xem chi tiết →</i>
+                    </span>
+                  </button>
+                </article>
+              ))}
+            </div>
+          </AsciiReveal>
         )}
       </section>
 

@@ -85,6 +85,8 @@ h1, h2, h3, p, span, strong, button, input { text-rendering: optimizeLegibility;
 .library-search input::placeholder { color: rgba(255,255,255,.3); }
 .library-search button { color: rgba(255,255,255,.45); font-size: 20px; line-height: 1; }
 .library-result-count { margin: 22px 0 18px; color: rgba(255,255,255,.34); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.library-ascii-reveal { --ascii-accent: #d6a34b; --ascii-flash: #f3c970; --ascii-glyph: #b98b3e; --ascii-surface: #10131a; }
+.library-ascii-reveal .library-card { animation: none; }
 .library-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 30px 22px; }
 .library-card { min-width: 0; animation: library-card-in .55s var(--delay) cubic-bezier(.2,.75,.2,1) both; }
 @keyframes library-card-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }

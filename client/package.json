@@ -11,10 +11,11 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",
-    "vite": "^5.4.14",
+    "ascii-reveal": "https://github.com/quanhoangindex/ascii-reveal/archive/7339882106c2a3b771c44670344b448f5c5a674a.tar.gz",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "vite": "^5.4.14"
   },
   "devDependencies": {
     "@types/react": "^18.3.18",
