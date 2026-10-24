@@ -6,6 +6,7 @@ import { connectDatabase } from "../config/database";
 import { GameEngine, viewFor } from "../game";
 import { Card } from "../models/Card";
 import { GameRecord } from "../models/GameRecord";
+import { generateIceServers } from "../services/turn";
 
 const ROOM_CODE_LENGTH = 5;
 const ROOM_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -346,10 +347,10 @@ export const createSocketServer = (httpServer: HttpServer): Server => {
       } catch (error) { socket.emit("error", { message: errorMessage(error) }); }
     });
 
-    socket.on("voice:getConfig", () => {
+    socket.on("voice:getConfig", async () => {
       try {
         getRoomMembership(socket);
-        socket.emit("voice:config", { iceServers: env.iceServers });
+        socket.emit("voice:config", { iceServers: await generateIceServers() });
       } catch (error) { socket.emit("voice:error", { message: errorMessage(error) }); }
     });
 
