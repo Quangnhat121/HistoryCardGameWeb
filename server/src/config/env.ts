@@ -19,6 +19,21 @@ export const env = {
     .split(",")
     .map((origin) => origin.trim().replace(/\/$/, ""))
     .filter(Boolean),
+  iceServers: [
+    {
+      urls: (process.env.STUN_URLS ?? "stun:stun.l.google.com:19302,stun:stun.cloudflare.com:3478")
+        .split(",")
+        .map((url) => url.trim())
+        .filter(Boolean),
+    },
+    ...(process.env.TURN_URLS
+      ? [{
+          urls: process.env.TURN_URLS.split(",").map((url) => url.trim()).filter(Boolean),
+          username: process.env.TURN_USERNAME ?? "",
+          credential: process.env.TURN_CREDENTIAL ?? "",
+        }]
+      : []),
+  ],
 };
 
 export const requireMongoUri = (): string => {

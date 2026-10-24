@@ -31,6 +31,17 @@ button, input { font: inherit; }
 html { scroll-behavior: smooth; }
 .font-serif { font-family: "Segoe UI", Tahoma, Arial, sans-serif !important; font-kerning: normal; }
 h1, h2, h3, p, span, strong, button, input { text-rendering: optimizeLegibility; }
+.voice-controls { position: fixed; z-index: 85; bottom: 16px; left: 16px; display: flex; align-items: center; gap: 8px; padding: 7px; border: 1px solid rgba(255,255,255,.13); border-radius: 999px; background: rgba(9,12,17,.9); box-shadow: 0 14px 40px rgba(0,0,0,.38); backdrop-filter: blur(14px); }
+.voice-controls button { position: relative; display: grid; width: 42px; height: 42px; place-items: center; border: 1px solid rgba(255,255,255,.12); border-radius: 50%; color: #f1dfba; background: rgba(255,255,255,.05); transition: color .2s, border-color .2s, background .2s, transform .2s; }
+.voice-controls button:hover:not(:disabled) { border-color: rgba(213,170,85,.55); color: #f3c970; transform: translateY(-1px); }
+.voice-controls button.is-off { border-color: rgba(248,113,113,.38); color: #fca5a5; background: rgba(127,29,29,.28); }
+.voice-controls button:disabled { cursor: not-allowed; opacity: .72; }
+.voice-controls svg { width: 21px; height: 21px; overflow: visible; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.voice-controls .voice-slash { stroke-width: 2.4; filter: drop-shadow(0 0 2px #090c11); }
+.voice-status { position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; border: 1px solid #18201d; border-radius: 50%; background: #34d399; box-shadow: 0 0 7px rgba(52,211,153,.75); }
+.voice-status[data-error] { background: #f87171; box-shadow: 0 0 7px rgba(248,113,113,.75); }
+.voice-controls audio { display: none; }
+@media (max-width: 640px) { .voice-controls { bottom: 76px; left: 10px; } }
 
 /* ═══════════════════════════════════════════════════════════════════
    CARD LIBRARY

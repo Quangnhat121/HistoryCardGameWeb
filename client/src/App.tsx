@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ChallengeOverlay } from "./components/ChallengeOverlay";
 import { ConnectionBanner } from "./components/ConnectionBanner";
 import { SoundToggle } from "./components/SoundToggle";
+import { VoiceChat } from "./components/VoiceChat";
 import { useGame } from "./hooks/useGame";
 import { GamePage } from "./pages/GamePage";
 import { CardsPage } from "./pages/CardsPage";
@@ -47,6 +48,7 @@ export default function App() {
       {game.error && <div className="fixed right-3 top-12 z-[90] max-w-sm rounded-xl border border-red-400/30 bg-red-950/95 px-4 py-3 text-sm text-red-100 shadow-xl">{game.error}</div>}
       {page}
       <ChallengeOverlay result={game.challengeVisual} />
+      {game.room && !game.winnerName && <VoiceChat room={game.room} />}
       <SoundToggle />
     </div>
   );

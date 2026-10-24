@@ -38,6 +38,9 @@ interface CreatePayload { name?: unknown }
 interface JoinPayload { code?: unknown; name?: unknown }
 interface PlacePayload { cardId?: unknown; index?: unknown }
 interface ChallengePayload { cardId?: unknown }
+interface VoiceTargetPayload { targetPlayerId?: unknown }
+interface VoiceDescriptionPayload extends VoiceTargetPayload { description?: unknown }
+interface VoiceIcePayload extends VoiceTargetPayload { candidate?: unknown }
 
 export const rooms = new Map<string, GameRoom>();
 
@@ -89,6 +92,28 @@ const getRoomMembership = (socket: Socket<any, any, any, SocketData>) => {
   const player = room.players.find((entry) => entry.playerId === playerId);
   if (!player) throw new Error("Bạn không còn ở trong phòng");
   return { room, player };
+};
+
+const getVoiceTarget = (socket: Socket<any, any, any, SocketData>, value: unknown) => {
+  const { room, player } = getRoomMembership(socket);
+  if (typeof value !== "string" || value === player.playerId) throw new Error("Người nhận voice không hợp lệ");
+  const target = room.players.find((entry) => entry.playerId === value && entry.connected && entry.socketId);
+  if (!target?.socketId) throw new Error("Người nhận voice không còn kết nối");
+  return { room, player, target };
+};
+
+const isSessionDescription = (value: unknown): value is { type: string; sdp?: string } => {
+  if (!value || typeof value !== "object") return false;
+  const description = value as Record<string, unknown>;
+  return typeof description.type === "string"
+    && ["offer", "answer"].includes(description.type)
+    && (description.sdp === undefined || typeof description.sdp === "string");
+};
+
+const isIceCandidate = (value: unknown): boolean => {
+  if (value === null) return true;
+  if (!value || typeof value !== "object") return false;
+  return typeof (value as Record<string, unknown>).candidate === "string";
 };
 
 const emitRoomUpdate = (io: Server, room: GameRoom): void => {
@@ -321,9 +346,50 @@ export const createSocketServer = (httpServer: HttpServer): Server => {
       } catch (error) { socket.emit("error", { message: errorMessage(error) }); }
     });
 
+    socket.on("voice:getConfig", () => {
+      try {
+        getRoomMembership(socket);
+        socket.emit("voice:config", { iceServers: env.iceServers });
+      } catch (error) { socket.emit("voice:error", { message: errorMessage(error) }); }
+    });
+
+    socket.on("voice:ready", () => {
+      try {
+        const { room, player } = getRoomMembership(socket);
+        socket.to(room.code).emit("voice:ready", { playerId: player.playerId });
+      } catch (error) { socket.emit("voice:error", { message: errorMessage(error) }); }
+    });
+
+    socket.on("voice:offer", (payload: VoiceDescriptionPayload) => {
+      try {
+        const { player, target } = getVoiceTarget(socket, payload?.targetPlayerId);
+        if (!isSessionDescription(payload?.description) || payload.description.type !== "offer")
+          throw new Error("Dữ liệu voice offer không hợp lệ");
+        io.to(target.socketId!).emit("voice:offer", { fromPlayerId: player.playerId, description: payload.description });
+      } catch (error) { socket.emit("voice:error", { message: errorMessage(error) }); }
+    });
+
+    socket.on("voice:answer", (payload: VoiceDescriptionPayload) => {
+      try {
+        const { player, target } = getVoiceTarget(socket, payload?.targetPlayerId);
+        if (!isSessionDescription(payload?.description) || payload.description.type !== "answer")
+          throw new Error("Dữ liệu voice answer không hợp lệ");
+        io.to(target.socketId!).emit("voice:answer", { fromPlayerId: player.playerId, description: payload.description });
+      } catch (error) { socket.emit("voice:error", { message: errorMessage(error) }); }
+    });
+
+    socket.on("voice:ice", (payload: VoiceIcePayload) => {
+      try {
+        const { player, target } = getVoiceTarget(socket, payload?.targetPlayerId);
+        if (!isIceCandidate(payload?.candidate)) throw new Error("ICE candidate không hợp lệ");
+        io.to(target.socketId!).emit("voice:ice", { fromPlayerId: player.playerId, candidate: payload.candidate });
+      } catch (error) { socket.emit("voice:error", { message: errorMessage(error) }); }
+    });
+
     socket.on("room:leave", () => {
       try {
         const { room, player } = getRoomMembership(socket);
+        socket.to(room.code).emit("voice:left", { playerId: player.playerId });
         socket.leave(room.code);
         socket.data = {};
         removePlayer(io, room, player.playerId);
@@ -336,6 +402,7 @@ export const createSocketServer = (httpServer: HttpServer): Server => {
       const room = rooms.get(roomCode);
       const player = room?.players.find((entry) => entry.playerId === playerId);
       if (!room || !player || player.socketId !== socket.id) return;
+      io.to(room.code).emit("voice:left", { playerId });
       player.connected = false;
       player.socketId = null;
       emitRoomUpdate(io, room);
