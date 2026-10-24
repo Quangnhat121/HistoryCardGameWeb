@@ -50,12 +50,12 @@ export function WaitingRoomPage({ room, speakingPlayerIds, onStart, onLeave }: W
         <h1 className="mt-3 text-3xl font-extrabold leading-tight tracking-normal text-parchment">Mời đồng đội tham gia</h1>
         <div className="mx-auto mt-6 flex w-fit items-stretch gap-2">
           <button
-            onClick={() => showRoomCode && void copyCode()}
-            aria-label={showRoomCode ? "Sao chép mã phòng" : "Mã phòng đang được ẩn"}
+            onClick={() => void copyCode()}
+            aria-label="Sao chép mã phòng"
             className="group flex min-w-[220px] items-center justify-center gap-3 rounded-2xl border border-gold/25 bg-gold/10 px-5 py-3 transition hover:bg-gold/15"
           >
             <span className="font-mono text-3xl font-black tracking-[0.25em] text-amber-200">{showRoomCode ? room.code : "•••••"}</span>
-            <span className="text-xs text-gold">{showRoomCode ? (copied ? "Đã chép!" : "Sao chép") : "Đang ẩn"}</span>
+            <span className="text-xs text-gold">{copied ? "Đã chép!" : "Sao chép"}</span>
           </button>
           <button
             onClick={() => { playClick(); setCopied(false); setShowRoomCode((visible) => !visible); }}
