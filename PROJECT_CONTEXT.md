@@ -27,7 +27,25 @@
 | Hosting | Hai project Vercel dùng chung Git repository |
 | Test | Vitest cho game engine |
 
-## 2. Cấu trúc thư mục
+## 2. Phân vùng theo game và nhánh
+
+Trước khi sửa mã, chạy `git branch --show-current` và xác định game được yêu cầu trong prompt. Không mang thay đổi của game này sang game kia nếu người dùng không yêu cầu tích hợp.
+
+### Game 1 — Dòng Thời Gian / Cards
+
+- Là game đang có trên nhánh `main` và đang được deploy production.
+- Frontend chính: `client/src/pages/`, `client/src/components/`, `client/src/hooks/useGame.ts` và `client/src/types.ts`.
+- Backend luật chơi: `server/src/game/`; phòng, realtime, reconnect, rematch và voice nằm tại `server/src/socket/index.ts`.
+- Khi prompt ghi **chỉ sửa Dòng Thời Gian/Cards**, không tạo hoặc chỉnh `client/src/games/catan/`, `server/src/catan/` hay contract socket CATAN.
+
+### Game 2 — CATAN
+
+- CATAN được phát triển riêng trên nhánh `feature/game-hub-catan-local`; source CATAN không có trên `main` tại thời điểm tài liệu này được cập nhật.
+- Module riêng trên nhánh đó nằm tại `client/src/games/catan/` và `server/src/catan/`.
+- Khi prompt ghi **chỉ sửa CATAN**, không thay đổi luật trong `server/src/game/`, hook `client/src/hooks/useGame.ts` hay các event `room:*`/`game:*` của Dòng Thời Gian.
+- Các file tích hợp dùng chung như `client/src/App.tsx`, `client/src/styles.css`, `PROJECT_CONTEXT.md` và `server/src/socket/index.ts` có thể phát sinh conflict khi nhập thay đổi giữa hai nhánh; phải đọc diff và giữ hành vi của cả hai game.
+
+## 3. Cấu trúc thư mục
 
 ```text
 HistoryCardGameWeb/
@@ -77,7 +95,7 @@ HistoryCardGameWeb/
 - Sửa dữ liệu thẻ: `server/src/seed/cards.data.ts`, `server/src/seed/cards.seed.ts`, `server/public/cards/`.
 - Sửa deploy/env: `DEPLOY_VERCEL.md`, `client/vercel.json`, `server/src/config/env.ts`.
 
-## 3. Các màn hình và chức năng frontend
+## 4. Dòng Thời Gian — màn hình và chức năng frontend
 
 ### `LobbyPage`
 
@@ -111,6 +129,7 @@ HistoryCardGameWeb/
 - Có timer theo lượt và thông báo người chơi hết giờ.
 - Người đang nói qua voice được làm sáng trong thanh người chơi.
 - Thẻ có thể phóng to; trên mobile có thể nhấn giữ.
+- Khi có thẻ mới được đặt, timeline tự cuộn thẻ đó vào giữa vùng nhìn. Thẻ có hiệu ứng xuất hiện, viền sáng và nhãn **Thẻ vừa đặt** kèm tên người đặt; trạng thái này lấy từ `game.lastPlaced` và không thay đổi luật game.
 
 ### `ResultPage`
 
@@ -138,7 +157,7 @@ HistoryCardGameWeb/
 - `SoundToggle`: bật/tắt âm thanh.
 - Nhạc nền đổi giữa chế độ home và game.
 
-## 4. Luật game hiện tại
+## 5. Dòng Thời Gian — luật game hiện tại
 
 - Phòng có từ 2 đến 4 người.
 - Khi bắt đầu, thứ tự người chơi được xáo trộn.
@@ -166,7 +185,7 @@ HistoryCardGameWeb/
   - sau challenge được cộng thêm 3 giây nếu ván chưa kết thúc.
 - Kết quả ván được lưu vào MongoDB để tính bảng xếp hạng.
 
-## 5. Phòng, session, reconnect và rematch
+## 6. Dòng Thời Gian — phòng, session, reconnect và rematch
 
 - Backend giữ các phòng trong `Map<string, GameRoom>` tại `server/src/socket/index.ts`.
 - Mã phòng dài 5 ký tự, bỏ các ký tự dễ nhầm.
@@ -187,7 +206,7 @@ HistoryCardGameWeb/
 6. Khi mọi thành viên còn trong phòng đều đã về, backend xóa engine/timer cũ và trả phòng về trạng thái sẵn sàng.
 7. Chủ phòng có thể bắt đầu ván tiếp theo với cùng mã phòng.
 
-## 6. Socket.IO contract
+## 7. Dòng Thời Gian — Socket.IO contract
 
 ### Client → server
 
@@ -221,7 +240,7 @@ HistoryCardGameWeb/
 | `voice:ready/offer/answer/ice/left` | WebRTC signaling |
 | `voice:error` | Lỗi riêng của voice |
 
-## 7. Voice chat
+## 8. Hạ tầng chung — voice chat
 
 - Voice dùng WebRTC dạng mesh: mỗi trình duyệt tạo `RTCPeerConnection` với từng người còn lại.
 - Socket.IO chỉ làm signaling; audio đi trực tiếp hoặc qua TURN.
@@ -234,7 +253,7 @@ HistoryCardGameWeb/
 - ID người đang nói được truyền lên `App`, sau đó dùng để làm sáng người tương ứng trong phòng chờ và trận đấu.
 - ICE ưu tiên credentials động từ Metered. Nếu gọi Metered thất bại, backend fallback về cấu hình STUN/TURN tĩnh.
 
-## 8. REST API và dữ liệu
+## 9. Dòng Thời Gian — REST API và dữ liệu
 
 ### Endpoints
 
@@ -264,7 +283,7 @@ HistoryCardGameWeb/
 - `client/src/socket.ts` tự đổi đường dẫn `.png` thành `.webp` khi tải.
 - Script tối ưu: `npm run optimize:images` trong thư mục `server`.
 
-## 9. Biến môi trường
+## 10. Hạ tầng chung — biến môi trường
 
 Không ghi giá trị secret thật vào Git hoặc file này.
 
@@ -290,7 +309,7 @@ Không ghi giá trị secret thật vào Git hoặc file này.
 | `VITE_SERVER_URL` | Public URL của backend |
 | `VITE_SOCKET_PATH` | Thường là `/socket.io` |
 
-## 10. Chạy local
+## 11. Chạy local
 
 Yêu cầu Node.js phù hợp với `package.json` và MongoDB URI hợp lệ.
 
@@ -322,7 +341,7 @@ npm run seed
 
 Lưu ý: seed thay toàn bộ collection thẻ.
 
-## 11. Kiểm tra trước khi push
+## 12. Kiểm tra trước khi push
 
 ```powershell
 cd E:\Project\HistoryCardGameWeb\client
@@ -338,7 +357,7 @@ npm run build
 - Có thể chạy socket smoke test bằng `npm run test:socket` khi backend/database test đã sẵn sàng; script này có thể tạo game record nên không chạy bừa trên production.
 - Sau khi build frontend, `client/tsconfig.app.tsbuildinfo` có thể bị thay đổi. Đây là build artifact đang được Git track; không đưa thay đổi ngoài ý muốn vào commit.
 
-## 12. Deploy
+## 13. Deploy
 
 - Push lên `main` kích hoạt hai Vercel deployments.
 - Backend project dùng root directory `server`.
@@ -356,7 +375,7 @@ npm run build
 - Hướng nâng cấp đúng: lưu room/game state và timer trong Redis, dùng Socket.IO Redis adapter/pub-sub, và chạy realtime backend trên môi trường hỗ trợ WebSocket lâu dài.
 - WebRTC mesh phù hợp tối đa 4 người hiện tại; nếu tăng số người đáng kể nên cân nhắc SFU.
 
-## 13. Quy ước và lưu ý khi sửa
+## 14. Quy ước và lưu ý khi sửa
 
 - Backend là nguồn sự thật cho luật game; không tin dữ liệu hành động từ client.
 - `viewFor` phải tiếp tục che tay bài của người chơi khác.
@@ -369,7 +388,7 @@ npm run build
 - Giữ UI responsive và hỗ trợ bàn phím/ARIA cho modal, nút và điều khiển voice.
 - Không xóa hoặc ghi đè thay đổi không liên quan trong working tree.
 
-## 14. Trạng thái tính năng hiện tại
+## 15. Dòng Thời Gian — trạng thái tính năng hiện tại
 
 - [x] Tạo/vào/rời phòng bằng mã 5 ký tự.
 - [x] 2–4 người chơi, chủ phòng bắt đầu game.
@@ -389,7 +408,7 @@ npm run build
 - [ ] Redis/shared state cho production nhiều instance.
 - [ ] Test tự động cấp socket/UI cho toàn bộ luồng multiplayer và rematch.
 
-## 15. Mốc Git gần nhất khi tạo tài liệu
+## 16. Mốc Git gần nhất khi tạo tài liệu
 
 - `0aa246c feat: let each player return for rematch`
 - `b11fed0 feat: keep room open for rematches`

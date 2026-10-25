@@ -24,12 +24,14 @@ export function GamePage({ room, game, timeoutNotice, speakingPlayerIds, onPlace
   const [selectedChallengeId, setSelectedChallengeId] = useState<number | null>(null);
   const [challengePending, setChallengePending] = useState(false);
   const wasMyTurn = useRef(false);
+  const lastPlacedCardRef = useRef<HTMLDivElement | null>(null);
   const isMyTurn = game.currentPlayerId === room.selfPlayerId;
   const ownPlayer = game.players.find((player) => player.id === room.selfPlayerId);
   const hand = ownPlayer?.hand ?? [];
   const canChallenge = isMyTurn && game.lastPlaced !== null && !game.hasChallengedThisTurn;
   const awaitingVerdict = game.phase === "awaiting_verdict";
   const currentPlayerName = game.players.find((player) => player.id === game.currentPlayerId)?.name ?? "Người chơi";
+  const lastPlacedPlayerName = game.players.find((player) => player.id === game.lastPlaced?.playerId)?.name ?? "Người chơi trước";
 
   useEffect(() => {
     if (selectedCardId !== null && !hand.some((card) => card.cardId === selectedCardId)) setSelectedCardId(null);
@@ -42,6 +44,14 @@ export function GamePage({ room, game, timeoutNotice, speakingPlayerIds, onPlace
     if (isMyTurn && !wasMyTurn.current) playYourTurn();
     wasMyTurn.current = isMyTurn;
   }, [isMyTurn]);
+
+  useEffect(() => {
+    if (!game.lastPlaced) return;
+    const frame = window.requestAnimationFrame(() => {
+      lastPlacedCardRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [game.lastPlaced?.cardId]);
 
   const place = () => {
     if (!isMyTurn || selectedCardId === null || selectedIndex === null || awaitingVerdict) return;
@@ -85,8 +95,9 @@ export function GamePage({ room, game, timeoutNotice, speakingPlayerIds, onPlace
             return (
               <div key={card.cardId} className="flex shrink-0 items-center gap-2">
                 <button type="button" disabled={!isMyTurn || awaitingVerdict || selectedCardId === null} onClick={() => setSelectedIndex(index)} aria-label={`Chèn tại vị trí ${index}`} className={`flex h-36 w-8 shrink-0 items-center justify-center rounded-xl border border-dashed text-2xl transition disabled:opacity-20 ${selectedIndex === index ? "border-gold bg-gold/20 text-gold" : "border-white/15 text-slate-600 hover:border-gold/60 hover:text-gold"}`}>+</button>
-                <div className="relative">
+                <div ref={isLast ? lastPlacedCardRef : undefined} className={`relative ${isLast ? "timeline-last-placed" : ""}`}>
                   {card.isRoot && <span className="absolute -top-6 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-gold px-2 py-1 text-[9px] font-black uppercase text-black">Thẻ gốc</span>}
+                  {isLast && <span className="timeline-last-placed-label"><i />Thẻ vừa đặt · {lastPlacedPlayerName}</span>}
                   <Card card={card} showBack={card.revealed} year={card.year} month={card.month} selected={selectedChallengeId === card.cardId} highlighted={isLast} clickable={isLast && canChallenge} onClick={isLast && canChallenge ? () => setSelectedChallengeId(card.cardId) : undefined} className="w-44 sm:w-48 lg:w-52" />
                 </div>
                 {index === game.timeline.length - 1 && <button type="button" disabled={!isMyTurn || awaitingVerdict || selectedCardId === null} onClick={() => setSelectedIndex(game.timeline.length)} aria-label={`Chèn tại vị trí ${game.timeline.length}`} className={`flex h-36 w-8 shrink-0 items-center justify-center rounded-xl border border-dashed text-2xl transition disabled:opacity-20 ${selectedIndex === game.timeline.length ? "border-gold bg-gold/20 text-gold" : "border-white/15 text-slate-600 hover:border-gold/60 hover:text-gold"}`}>+</button>}
@@ -96,6 +107,8 @@ export function GamePage({ room, game, timeoutNotice, speakingPlayerIds, onPlace
           </div>
         </div>
       </section>
+
+      <p className="sr-only" aria-live="polite">{game.lastPlaced ? `${lastPlacedPlayerName} vừa đặt thẻ ${game.lastPlaced.event}. Timeline đã chuyển tới thẻ này.` : ""}</p>
 
       <Hand cards={hand} selectedCardId={selectedCardId} disabled={!isMyTurn || awaitingVerdict || game.winner !== null} onSelect={(cardId) => { setSelectedCardId(cardId); setSelectedIndex(null); }} />
 
