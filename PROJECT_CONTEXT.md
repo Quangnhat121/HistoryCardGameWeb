@@ -1,11 +1,12 @@
-# PROJECT CONTEXT — History Card Game Web
+# PROJECT CONTEXT — History Games Hub
 
 > Đây là tài liệu bàn giao chính của dự án. Khi bắt đầu một phiên làm việc mới, hãy đọc toàn bộ file này trước khi sửa mã. Sau mỗi thay đổi về kiến trúc, tính năng, event, biến môi trường hoặc deploy, phải cập nhật lại file này.
 
 ## 1. Tổng quan nhanh
 
-- Tên hiển thị: **Dòng Thời Gian**.
-- Loại dự án: game thẻ lịch sử nhiều người chơi thời gian thực trên web.
+- Tên hệ thống: **History Games Hub**.
+- Trò chơi hiện có: **Dòng Thời Gian** và module nền tảng **CATAN**.
+- Loại dự án: website nhiều board game nhiều người chơi thời gian thực; Dòng Thời Gian là game hoàn chỉnh hiện tại.
 - Ngôn ngữ giao diện: tiếng Việt.
 - GitHub: `https://github.com/Quangnhat121/HistoryCardGameWeb.git`.
 - Nhánh triển khai: `main`.
@@ -35,8 +36,10 @@ HistoryCardGameWeb/
 │  ├─ public/audio/                # Nhạc nền sảnh và trong game
 │  ├─ src/
 │  │  ├─ components/               # UI dùng lại, thẻ, voice, timer, hiệu ứng
+│  │  ├─ games/catalog.ts          # Danh mục game typed và route canonical
+│  │  ├─ games/catan/              # Module CATAN: types, socket, hook và UI riêng
 │  │  ├─ hooks/useGame.ts          # State client và Socket.IO game events
-│  │  ├─ pages/                    # Lobby, phòng chờ, game, kết quả, luật, kho thẻ
+│  │  ├─ pages/                    # Game Hub và các trang của Dòng Thời Gian
 │  │  ├─ App.tsx                   # Điều phối màn hình và component toàn cục
 │  │  ├─ socket.ts                 # Socket client, session và URL ảnh
 │  │  ├─ sounds.ts                 # Nhạc và hiệu ứng âm thanh
@@ -50,6 +53,7 @@ HistoryCardGameWeb/
 │  ├─ scripts/                     # Socket smoke test, tối ưu ảnh
 │  ├─ src/
 │  │  ├─ config/                   # Env, MongoDB, cấu hình timer
+│  │  ├─ catan/                    # CATAN base engine, board graph, rules, view, socket và tests
 │  │  ├─ game/                     # GameEngine, viewFor, types và tests
 │  │  ├─ models/                   # Card và GameRecord Mongoose models
 │  │  ├─ routes/                   # REST API cards và leaderboard
@@ -86,6 +90,36 @@ HistoryCardGameWeb/
 - Mở trang luật chơi.
 - Mở thư viện thẻ.
 - Hiển thị bảng xếp hạng lấy từ backend.
+- Có lối quay về Game Hub; các hash cũ `#top` và `#play` vẫn tiếp tục mở đúng lobby Dòng Thời Gian.
+
+### `GameHubPage`
+
+- Là trang mặc định tại hash rỗng; route canonical là `#hub`.
+- Hiển thị danh sách trò chơi và đưa người dùng tới `#timeline` hoặc `#catan`.
+- Chỉ làm nhiệm vụ điều hướng; không giữ state trận đấu.
+- Dữ liệu card lấy từ catalog tĩnh typed tại `client/src/games/catalog.ts`; không cần backend CRUD/database.
+- Mỗi entry có ID, tên, mô tả, route, status, cover key, thể loại, số người, nhãn hành động và cờ enabled.
+- Card dùng minh họa CSS tự tạo, có focus-visible/ARIA và responsive; CATAN hiện mang trạng thái `beta`/`Đang phát triển` nhưng menu đã có thể truy cập.
+
+### Routing frontend
+
+- App dùng hash routing nhẹ vì project chưa có router package.
+- Route canonical: `#hub`, `#timeline`, `#cards`, `#rules`, `#catan`, `#catan-local`.
+- Hash rỗng và hash không nhận diện được hiển thị Game Hub.
+- Alias cũ `#top` và `#play` tiếp tục mở Dòng Thời Gian và cuộn tới anchor tương ứng.
+- Điều hướng nội bộ dùng History API có state; nút quay lại trở về entry trước nếu đến từ Hub/trang nội bộ, hoặc dùng route fallback an toàn khi mở URL trực tiếp.
+
+### Module CATAN frontend
+
+- Nằm hoàn toàn trong `client/src/games/catan/`.
+- `CatanMenuPage`: vào chế độ chơi cục bộ hoặc tạo/vào phòng CATAN bằng mã 5 ký tự.
+- `CatanWaitingRoomPage`: phòng 3–4 người, chỉ chủ phòng được khởi tạo bàn.
+- `CatanGamePage`: bàn xem trước 19 hex và state nền tảng từ server; chưa nhận action multiplayer.
+- `CatanLocalSetupPage`: chọn 3–4 người, đặt tên rồi khởi tạo ván trên cùng thiết bị ở `#catan-local`.
+- `CatanLocalGamePage`: giữ một `CatanEngine` trong phiên trình duyệt, dùng `catanViewFor` theo người đang cầm thiết bị; mọi action đi qua engine. Màn hình chuyển thiết bị che tài nguyên/thẻ riêng khi đổi lượt, bỏ thẻ hoặc xác nhận giao dịch. Ván cục bộ không lưu database và tải lại trang sẽ bắt đầu ván mới.
+- `components/CatanBoard`: SVG 19 hex, cạnh/giao điểm/cảng, quân cờ, tên cướp, zoom/pan, highlight target hợp lệ lấy từ engine; bên trong tách `CatanTile`, `CatanRoad`, `CatanBuilding`, `SettlementMarker`, `CityMarker` để giảm render không cần thiết. `PlayerPanel`, `ResourcePanel`, `GameControls` tách riêng bảng điểm/danh hiệu, tài nguyên và điều khiển.
+- `hooks/useCatan.ts`, `socket.ts`, `types.ts` độc lập với hook/type/session của Dòng Thời Gian.
+- Session dùng `catan-player-id` và `catan-room-code`; không dùng lại hai key `history-*` của Dòng Thời Gian.
 
 ### `WaitingRoomPage`
 
@@ -140,6 +174,8 @@ HistoryCardGameWeb/
 
 ## 4. Luật game hiện tại
 
+Phần này chỉ mô tả **Dòng Thời Gian**.
+
 - Phòng có từ 2 đến 4 người.
 - Khi bắt đầu, thứ tự người chơi được xáo trộn.
 - Mỗi người nhận 5 thẻ; một thẻ gốc được lật sẵn trên timeline.
@@ -189,6 +225,8 @@ HistoryCardGameWeb/
 
 ## 6. Socket.IO contract
 
+Các event trong hai bảng dưới đây thuộc namespace mặc định và chỉ dành cho **Dòng Thời Gian**.
+
 ### Client → server
 
 | Event | Payload | Ý nghĩa |
@@ -220,6 +258,37 @@ HistoryCardGameWeb/
 | `voice:config` | Danh sách ICE servers |
 | `voice:ready/offer/answer/ice/left` | WebRTC signaling |
 | `voice:error` | Lỗi riêng của voice |
+
+### CATAN Socket.IO contract
+
+- CATAN dùng namespace riêng `/catan`, không dùng chung room map, socket data hay event handler với Dòng Thời Gian.
+- Client chỉ kết nối namespace này khi mở `#catan` và dùng session CATAN riêng để reconnect trong 60 giây.
+
+| Chiều | Event | Payload/ý nghĩa |
+| --- | --- | --- |
+| Client → server | `catan:room:create` | `{ name }` — tạo phòng CATAN |
+| Client → server | `catan:room:join` | `{ code, name }` — vào phòng CATAN |
+| Client → server | `catan:room:start` | Chủ phòng khởi tạo bàn 19 hex khi đủ 3–4 người |
+| Client → server | `catan:room:leave` | Rời phòng/bàn CATAN |
+| Server → client | `catan:room:update` | Room state riêng của CATAN |
+| Server → client | `catan:game:state` | Public view của state bàn CATAN |
+| Server → client | `catan:error` | Lỗi riêng của module CATAN |
+
+### Phạm vi CATAN hiện tại
+
+- Backend có CATAN base-game engine cho 3–4 người, tham chiếu rulebook chính thức tại `https://www.catan.com/understand-catan/game-rules`.
+- `board.ts` tạo graph logic gồm 19 hex axial, 54 intersection, 72 edge, 30 coastal edge và 9 harbor; ID ổn định, không phụ thuộc pixel.
+- Hỗ trợ fixed board cho test và random board hợp lệ; random board giữ đúng túi terrain/token và không đặt số đỏ 6/8 cạnh nhau.
+- Phase engine: `setup`, `roll`, `discard`, `robber`, `action`, `road_building`, `finished`.
+- Đã triển khai setup rắn tiến/ngược, distance rule, tài nguyên ban đầu, giới hạn quân, roll/production, thiếu ngân hàng, số 7, discard, robber/steal, build và nâng cấp nguyên tử.
+- Đã triển khai maritime trade 4:1/3:1/2:1 và domestic trade có offer/accept/reject/cancel, kiểm tra lại tài nguyên khi accept.
+- Đã triển khai đủ deck 25 development cards, giới hạn mua/dùng, Knight, Road Building, Year of Plenty, Monopoly và VP card bí mật.
+- Longest Road dùng thuật toán graph trail, xét settlement đối thủ và tie-holder; Largest Army và chiến thắng 10 điểm được tính lại sau thay đổi state.
+- Public view không lộ resource breakdown, loại development card hoặc VP bí mật của đối thủ.
+- Engine trả clone của state và action sai dùng `CatanRuleError` có structured error code.
+- Engine cung cấp `getLegalTargets`, `getRobberVictims`, `getAvailableActions`, `getMaritimeRatio`, `canMaritimeTrade` để giao diện hỏi khả năng thao tác mà không tự quyết luật.
+- UI chơi cục bộ nhập trực tiếp engine/types/view từ `server/src/catan/` khi build frontend; không thêm thư viện hoặc backend CRUD. Socket `/catan` chưa expose multiplayer action events cho các luật mới.
+- Không được đưa logic CATAN vào `server/src/game/`, `client/src/hooks/useGame.ts` hoặc các event `room:*`/`game:*` hiện tại.
 
 ## 7. Voice chat
 
@@ -290,6 +359,9 @@ Không ghi giá trị secret thật vào Git hoặc file này.
 | `VITE_SERVER_URL` | Public URL của backend |
 | `VITE_SOCKET_PATH` | Thường là `/socket.io` |
 
+- Máy local hiện có `client/.env.local` (được Git ignore) với `VITE_SERVER_URL=http://localhost:3000` và `VITE_SOCKET_PATH=/socket.io`.
+- File local này không ảnh hưởng biến môi trường hoặc cấu hình deploy trên Vercel.
+
 ## 10. Chạy local
 
 Yêu cầu Node.js phù hợp với `package.json` và MongoDB URI hợp lệ.
@@ -311,6 +383,8 @@ npm run dev
 ```
 
 Mở frontend Vite, thường là `http://localhost:5173`. Để test multiplayer/voice, dùng hai profile trình duyệt hoặc hai thiết bị.
+
+Khi `client/.env.local` tồn tại, frontend gọi trực tiếp backend local tại `http://localhost:3000`; backend local phải cho phép `CLIENT_ORIGIN=http://localhost:5173`.
 
 ### Seed dữ liệu thẻ
 
@@ -334,7 +408,7 @@ npm run build
 ```
 
 - Client build gồm TypeScript và Vite production build.
-- Backend hiện có 12 test cho `GameEngine`.
+- Backend hiện có 12 test cho `GameEngine` Dòng Thời Gian và 27 test CATAN cho topology, setup/build, resources/robber, trade/development, scoring, legal targets và sample flow.
 - Có thể chạy socket smoke test bằng `npm run test:socket` khi backend/database test đã sẵn sàng; script này có thể tạo game record nên không chạy bừa trên production.
 - Sau khi build frontend, `client/tsconfig.app.tsbuildinfo` có thể bị thay đổi. Đây là build artifact đang được Git track; không đưa thay đổi ngoài ý muốn vào commit.
 
@@ -386,6 +460,12 @@ npm run build
 - [x] Kết thúc ván vẫn giữ phòng để chơi tiếp.
 - [x] Mỗi người tự quay về phòng; trạng thái `Đã về`/`...`.
 - [x] Che/hiện mã phòng trong phòng chờ.
+- [x] Game Hub và điều hướng riêng vào Dòng Thời Gian/CATAN.
+- [x] Module CATAN độc lập với namespace Socket.IO, room/session state, engine, types và UI riêng.
+- [x] Phòng CATAN 3–4 người, reconnect và khởi tạo bàn 19 hex.
+- [x] CATAN base engine: board graph, setup, lượt/xúc xắc, tài nguyên, xây dựng, giao thương, robber, development cards, danh hiệu và chiến thắng.
+- [x] Giao diện CATAN chơi cục bộ trên một thiết bị: setup, bàn SVG responsive, hành động engine, giao dịch, thẻ phát triển, điểm riêng và màn hình chuyển thiết bị.
+- [ ] Nối action API của CATAN engine vào Socket.IO namespace và UI multiplayer.
 - [ ] Redis/shared state cho production nhiều instance.
 - [ ] Test tự động cấp socket/UI cho toàn bộ luồng multiplayer và rematch.
 

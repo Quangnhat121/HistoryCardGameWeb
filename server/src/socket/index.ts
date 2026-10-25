@@ -7,6 +7,7 @@ import { GameEngine, viewFor } from "../game";
 import { Card } from "../models/Card";
 import { GameRecord } from "../models/GameRecord";
 import { getIceServers } from "../services/turn";
+import { registerCatanSocket } from "../catan/socket";
 
 const ROOM_CODE_LENGTH = 5;
 const ROOM_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -257,6 +258,7 @@ export const createSocketServer = (httpServer: HttpServer): Server => {
   const io = new Server(httpServer, {
     cors: { origin: env.clientOrigins, methods: ["GET", "POST"] },
   });
+  registerCatanSocket(io);
 
   io.on("connection", (socket: Socket<any, any, any, SocketData>) => {
     reconnectFromHandshake(io, socket);

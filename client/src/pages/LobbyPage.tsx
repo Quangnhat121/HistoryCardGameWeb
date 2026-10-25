@@ -6,6 +6,7 @@ interface LobbyPageProps {
   onJoin: (code: string, name: string) => void;
   onBrowseCards: () => void;
   onBrowseRules: () => void;
+  onBackToHub: () => void;
 }
 
 function UsersIcon() {
@@ -92,7 +93,7 @@ function useMouseLight(ref: React.RefObject<HTMLElement | null>) {
   }, [ref]);
 }
 
-export function LobbyPage({ onCreate, onJoin, onBrowseCards, onBrowseRules }: LobbyPageProps) {
+export function LobbyPage({ onCreate, onJoin, onBrowseCards, onBrowseRules, onBackToHub }: LobbyPageProps) {
   const [name, setName] = useState(localStorage.getItem("history-player-name") ?? "");
   const [code, setCode] = useState("");
   const [isLoaded, setIsLoaded] = useState(false);
@@ -155,15 +156,16 @@ export function LobbyPage({ onCreate, onJoin, onBrowseCards, onBrowseRules }: Lo
 
       {/* Navigation */}
       <nav className="relative z-10 mx-auto flex w-full max-w-[1440px] items-center justify-between px-5 py-5 sm:px-8 lg:px-12">
-        <a href="#top" className="group flex items-center gap-3 nav-brand" aria-label="Dòng Thời Gian - Trang chủ">
+        <button type="button" onClick={onBackToHub} className="group flex items-center gap-3 nav-brand text-left" aria-label="Quay lại Game Hub">
           <span className="brand-mark"><span>DT</span></span>
           <span>
             <strong className="block text-lg font-extrabold leading-none tracking-normal text-[#f3dfb2] brand-text">Dòng Thời Gian</strong>
             <small className="mt-1 block text-[9px] font-bold uppercase tracking-[.28em] text-white/35">History card game</small>
           </span>
-        </a>
+        </button>
         <div className="nav-menu hidden items-center gap-8 md:flex">
-          <a className="nav-link" href="#play">Bắt đầu</a>
+          <button type="button" className="nav-link" onClick={onBackToHub}>Game Hub</button>
+          <button type="button" className="nav-link" onClick={() => document.getElementById("play")?.scrollIntoView({ behavior: "smooth" })}>Bắt đầu</button>
           <button type="button" className="nav-link" onClick={onBrowseCards}>Bộ thẻ</button>
           <button type="button" className="nav-link" onClick={onBrowseRules}>Luật chơi</button>
         </div>
