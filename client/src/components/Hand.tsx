@@ -43,7 +43,6 @@ export function Hand({
       cardId: Number.isFinite(parsedCardId) ? parsedCardId : null,
       mode: "pending",
     };
-    event.currentTarget.setPointerCapture(event.pointerId);
   };
 
   const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -57,6 +56,7 @@ export function Hand({
       const isHorizontal = Math.abs(deltaX) > Math.abs(deltaY);
       gesture.mode = isHorizontal || gesture.cardId === null || disabled ? "scroll" : "card";
       suppressClickRef.current = true;
+      event.currentTarget.setPointerCapture(event.pointerId);
       if (gesture.mode === "card" && gesture.cardId !== null) {
         onDragStart(gesture.cardId, event.clientX, event.clientY);
       }

@@ -98,7 +98,6 @@ export function GamePage({ room, game, timeoutNotice, speakingPlayerIds, onPlace
       startScrollLeft: timelineScrollerRef.current.scrollLeft,
       moved: false,
     };
-    event.currentTarget.setPointerCapture(event.pointerId);
   };
 
   const moveTimelinePan = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -106,6 +105,7 @@ export function GamePage({ room, game, timeoutNotice, speakingPlayerIds, onPlace
     if (!pan || pan.pointerId !== event.pointerId || !timelineScrollerRef.current) return;
     const deltaX = event.clientX - pan.startX;
     if (Math.abs(deltaX) > 6) {
+      if (!pan.moved) event.currentTarget.setPointerCapture(event.pointerId);
       pan.moved = true;
       suppressTimelineClickRef.current = true;
     }
@@ -143,7 +143,7 @@ export function GamePage({ room, game, timeoutNotice, speakingPlayerIds, onPlace
 
         <div
           ref={timelineScrollerRef}
-          className="timeline-scroll overflow-x-auto px-2 pb-4 pt-7"
+          className="timeline-scroll overflow-x-auto px-2 pb-4 pt-14"
           onPointerDown={startTimelinePan}
           onPointerMove={moveTimelinePan}
           onPointerUp={(event) => finishTimelinePan(event)}
