@@ -2,6 +2,19 @@ import { useEffect, useRef, useState } from "react";
 import { clearSession, rememberSession, socket } from "../socket";
 import type { ChallengeResult, ChallengeVisual, GameState, RoomState } from "../types";
 
+interface PendingJoin {
+  code: string;
+  name: string;
+  retryCount: number;
+}
+
+interface SocketErrorPayload {
+  message: string;
+  code?: string;
+}
+
+const MAX_JOIN_RETRIES = 3;
+
 export const useGame = () => {
   const [room, setRoom] = useState<RoomState | null>(null);
   const [game, setGame] = useState<GameState | null>(null);
@@ -15,14 +28,29 @@ export const useGame = () => {
   const pendingChallengeRef = useRef<ChallengeResult | null>(null);
   const delayedStateTimerRef = useRef<number | null>(null);
   const timeoutNoticeTimerRef = useRef<number | null>(null);
+  const pendingJoinRef = useRef<PendingJoin | null>(null);
+  const retryJoinOnConnectRef = useRef(false);
+  const joinRetryTimerRef = useRef<number | null>(null);
 
   useEffect(() => { gameRef.current = game; }, [game]);
 
   useEffect(() => {
-    const onConnect = () => { setConnected(true); setReconnecting(false); };
+    const onConnect = () => {
+      setConnected(true);
+      setReconnecting(false);
+      const pendingJoin = pendingJoinRef.current;
+      if (retryJoinOnConnectRef.current && pendingJoin) {
+        retryJoinOnConnectRef.current = false;
+        socket.emit("room:join", { code: pendingJoin.code, name: pendingJoin.name });
+      }
+    };
     const onDisconnect = () => { setConnected(false); setReconnecting(true); };
     const onReconnectAttempt = () => setReconnecting(true);
     const onRoomUpdate = (nextRoom: RoomState) => {
+      pendingJoinRef.current = null;
+      retryJoinOnConnectRef.current = false;
+      if (joinRetryTimerRef.current !== null) window.clearTimeout(joinRetryTimerRef.current);
+      joinRetryTimerRef.current = null;
       rememberSession(nextRoom.selfPlayerId, nextRoom.code);
       const selfReturned = nextRoom.players.find((player) => player.playerId === nextRoom.selfPlayerId)?.returnedToRoom === true;
       if (!nextRoom.started || selfReturned) {
@@ -72,7 +100,21 @@ export const useGame = () => {
         timeoutNoticeTimerRef.current = null;
       }, 3_500);
     };
-    const onError = ({ message }: { message: string }) => {
+    const onError = ({ message, code }: SocketErrorPayload) => {
+      const pendingJoin = pendingJoinRef.current;
+      if (code === "ROOM_NOT_FOUND" && pendingJoin && pendingJoin.retryCount < MAX_JOIN_RETRIES) {
+        pendingJoin.retryCount += 1;
+        retryJoinOnConnectRef.current = true;
+        setReconnecting(true);
+        socket.disconnect();
+        joinRetryTimerRef.current = window.setTimeout(() => {
+          joinRetryTimerRef.current = null;
+          socket.connect();
+        }, 200 * pendingJoin.retryCount);
+        return;
+      }
+      pendingJoinRef.current = null;
+      retryJoinOnConnectRef.current = false;
       setError(message);
       window.setTimeout(() => setError(null), 4500);
     };
@@ -99,17 +141,28 @@ export const useGame = () => {
       socket.off("error", onError);
       if (delayedStateTimerRef.current !== null) window.clearTimeout(delayedStateTimerRef.current);
       if (timeoutNoticeTimerRef.current !== null) window.clearTimeout(timeoutNoticeTimerRef.current);
+      if (joinRetryTimerRef.current !== null) window.clearTimeout(joinRetryTimerRef.current);
     };
   }, []);
 
-  const createRoom = (name: string) => socket.emit("room:create", { name });
-  const joinRoom = (code: string, name: string) => socket.emit("room:join", { code, name });
+  const createRoom = (name: string) => {
+    pendingJoinRef.current = null;
+    socket.emit("room:create", { name });
+  };
+  const joinRoom = (code: string, name: string) => {
+    pendingJoinRef.current = { code, name, retryCount: 0 };
+    socket.emit("room:join", { code, name });
+  };
   const startGame = () => socket.emit("room:start");
   const returnToRoom = () => socket.emit("room:rematch");
   const placeCard = (cardId: number, index: number) => socket.emit("game:place", { cardId, index });
   const challenge = (cardId: number) => socket.emit("game:challenge", { cardId });
   const skipChallenge = () => socket.emit("game:skipChallenge");
   const leaveRoom = () => {
+    pendingJoinRef.current = null;
+    retryJoinOnConnectRef.current = false;
+    if (joinRetryTimerRef.current !== null) window.clearTimeout(joinRetryTimerRef.current);
+    joinRetryTimerRef.current = null;
     socket.emit("room:leave");
     clearSession();
     setRoom(null);

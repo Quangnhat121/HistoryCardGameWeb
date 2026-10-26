@@ -195,6 +195,7 @@ HistoryCardGameWeb/
 - Mã phòng dài 5 ký tự, bỏ các ký tự dễ nhầm.
 - Frontend lưu `history-player-id` và `history-room-code` trong `localStorage`.
 - Hai giá trị này được gửi trong Socket.IO handshake để reconnect.
+- Khi tham gia phòng trả về mã lỗi `ROOM_NOT_FOUND`, client tự ngắt/kết nối lại và thử join tối đa 3 lần. Cơ chế này giảm lỗi người chơi rơi vào Vercel instance khác sau khi vừa tạo/rời nhầm phòng; nếu cả 3 lần thất bại, UI mới hiển thị lỗi.
 - Thời gian chờ reconnect hiện là 60 giây. Sau đó người chơi bị xóa khỏi phòng.
 - Nếu chủ phòng rời, quyền chủ phòng chuyển cho người đầu tiên còn lại.
 - Nếu phòng không còn ai, phòng và timer bị xóa.

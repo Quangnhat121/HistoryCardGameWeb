@@ -296,7 +296,13 @@ export const createSocketServer = (httpServer: HttpServer): Server => {
         socket.data = { roomCode: code, playerId };
         await socket.join(code);
         emitRoomUpdate(io, room);
-      } catch (error) { socket.emit("error", { message: errorMessage(error) }); }
+      } catch (error) {
+        const message = errorMessage(error);
+        socket.emit("error", {
+          message,
+          ...(message === "Không tìm thấy phòng" ? { code: "ROOM_NOT_FOUND" } : {}),
+        });
+      }
     });
 
     socket.on("room:start", async () => {
