@@ -45,7 +45,8 @@ function HeadphonesIcon({ off }: { off: boolean }) {
 }
 
 export function VoiceChat({ room, onSpeakingPlayersChange }: VoiceChatProps) {
-  const [muted, setMuted] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [muted, setMuted] = useState(true);
   const [deafened, setDeafened] = useState(false);
   const [permissionError, setPermissionError] = useState(false);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -132,6 +133,10 @@ export function VoiceChat({ room, onSpeakingPlayersChange }: VoiceChatProps) {
   }, [localStream, muted, onSpeakingPlayersChange, remoteStreams, room.selfPlayerId]);
 
   useEffect(() => {
+    if (!voiceEnabled) {
+      onSpeakingPlayersChange([]);
+      return;
+    }
     let disposed = false;
     let iceServers = DEFAULT_ICE_SERVERS;
     let resolveMediaReady: () => void = () => undefined;
@@ -205,6 +210,7 @@ export function VoiceChat({ room, onSpeakingPlayersChange }: VoiceChatProps) {
       } catch {
         setPermissionError(true);
         setMuted(true);
+        setVoiceEnabled(false);
       } finally {
         resolveMediaReady();
       }
@@ -261,9 +267,15 @@ export function VoiceChat({ room, onSpeakingPlayersChange }: VoiceChatProps) {
       queuedIceRef.current.clear();
       setRemoteStreams({});
     };
-  }, [room.code, room.selfPlayerId]);
+  }, [onSpeakingPlayersChange, room.code, room.selfPlayerId, voiceEnabled]);
 
   const toggleMicrophone = () => {
+    if (!voiceEnabled) {
+      setPermissionError(false);
+      setMuted(false);
+      setVoiceEnabled(true);
+      return;
+    }
     const nextMuted = !muted;
     localStreamRef.current?.getAudioTracks().forEach((track) => { track.enabled = !nextMuted; });
     setMuted(nextMuted);
@@ -273,24 +285,24 @@ export function VoiceChat({ room, onSpeakingPlayersChange }: VoiceChatProps) {
     <div className="voice-controls" aria-label="Điều khiển voice chat">
       <button
         type="button"
-        className={muted || permissionError ? "is-off" : "is-on"}
+        className={!voiceEnabled || muted || permissionError ? "is-off" : "is-on"}
         onClick={toggleMicrophone}
-        disabled={permissionError}
-        aria-pressed={muted}
-        aria-label={permissionError ? "Không có quyền dùng micro" : muted ? "Bật micro" : "Tắt micro"}
-        title={permissionError ? "Hãy cấp quyền micro trong trình duyệt" : muted ? "Bật micro" : "Tắt micro"}
+        aria-pressed={voiceEnabled && !muted}
+        aria-label={permissionError ? "Thử bật lại voice" : !voiceEnabled ? "Bật voice" : muted ? "Bật micro" : "Tắt micro"}
+        title={permissionError ? "Cấp quyền micro rồi bấm để thử lại" : !voiceEnabled ? "Bật voice" : muted ? "Bật micro" : "Tắt micro"}
       >
-        <MicrophoneIcon off={muted || permissionError} />
+        <MicrophoneIcon off={!voiceEnabled || muted || permissionError} />
       </button>
       <button
         type="button"
-        className={deafened ? "is-off" : "is-on"}
+        className={!voiceEnabled || deafened ? "is-off" : "is-on"}
         onClick={() => setDeafened((value) => !value)}
+        disabled={!voiceEnabled}
         aria-pressed={deafened}
         aria-label={deafened ? "Bật nghe voice" : "Tắt nghe voice"}
         title={deafened ? "Bật nghe voice" : "Tắt nghe voice"}
       >
-        <HeadphonesIcon off={deafened} />
+        <HeadphonesIcon off={!voiceEnabled || deafened} />
       </button>
       <span className="voice-status" aria-hidden="true" data-error={permissionError || undefined} />
       {Object.entries(remoteStreams).map(([playerId, stream]) => (

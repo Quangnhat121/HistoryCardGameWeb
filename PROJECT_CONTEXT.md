@@ -247,10 +247,11 @@ HistoryCardGameWeb/
 
 - Voice dùng WebRTC dạng mesh: mỗi trình duyệt tạo `RTCPeerConnection` với từng người còn lại.
 - Socket.IO chỉ làm signaling; audio đi trực tiếp hoặc qua TURN.
-- Trình duyệt xin quyền microphone bằng `getUserMedia`.
+- Voice tắt mặc định khi vào phòng; trình duyệt chỉ xin quyền microphone bằng `getUserMedia` sau khi người chơi chủ động bấm **Bật voice**.
 - Hai nút luôn hiển thị trong phòng:
   - microphone: mute/unmute local track;
   - tai nghe: bật/tắt tiếng remote audio trên máy hiện tại.
+- Trước khi voice được bật, nút microphone hiển thị trạng thái tắt và nút tai nghe chưa hoạt động.
 - Khi không được cấp quyền microphone, nút mic báo trạng thái lỗi.
 - Speaking detection dùng Web Audio API phân tích mức âm lượng local và remote stream.
 - ID người đang nói được truyền lên `App`, sau đó dùng để làm sáng người tương ứng trong phòng chờ và trận đấu.
