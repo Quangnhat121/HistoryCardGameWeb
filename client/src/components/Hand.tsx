@@ -65,6 +65,12 @@ export function Hand({
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0 || !scrollerRef.current) return;
     stopMomentum();
+    const previousGesture = gestureRef.current;
+    if (previousGesture?.mode === "card") onDragCancel();
+    if (previousGesture && scrollerRef.current.hasPointerCapture(previousGesture.pointerId)) {
+      scrollerRef.current.releasePointerCapture(previousGesture.pointerId);
+    }
+    gestureRef.current = null;
     suppressClickRef.current = false;
     const cardElement = (event.target as HTMLElement).closest<HTMLElement>("[data-hand-card-id]");
     const parsedCardId = cardElement ? Number(cardElement.dataset.handCardId) : null;
@@ -136,6 +142,13 @@ export function Hand({
         onPointerMove={handlePointerMove}
         onPointerUp={(event) => finishGesture(event)}
         onPointerCancel={(event) => finishGesture(event, true)}
+        onLostPointerCapture={(event) => {
+          const gesture = gestureRef.current;
+          if (!gesture || gesture.pointerId !== event.pointerId) return;
+          if (gesture.mode === "card") onDragCancel();
+          gestureRef.current = null;
+          suppressClickRef.current = false;
+        }}
         onClickCapture={(event) => {
           if (!suppressClickRef.current) return;
           event.preventDefault();

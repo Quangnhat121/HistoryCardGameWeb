@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import { createPortal } from "react-dom";
 import { assetUrl } from "../socket";
 import type { CardFront } from "../types";
@@ -23,6 +24,7 @@ export function Card({
 }: CardProps) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const longPressTimer = useRef<number | null>(null);
+  const longPressCleanup = useRef<(() => void) | null>(null);
   const suppressNextClick = useRef(false);
 
   useEffect(() => {
@@ -37,17 +39,40 @@ export function Card({
   const cancelLongPress = () => {
     if (longPressTimer.current !== null) window.clearTimeout(longPressTimer.current);
     longPressTimer.current = null;
+    longPressCleanup.current?.();
+    longPressCleanup.current = null;
   };
 
-  const startLongPress = (pointerType: string) => {
-    if (pointerType === "mouse") return;
+  const startLongPress = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "mouse") return;
     cancelLongPress();
+    const { clientX: startX, clientY: startY, pointerId } = event;
+    const cancelOnMove = (moveEvent: PointerEvent) => {
+      if (moveEvent.pointerId === pointerId && Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) > 8) {
+        cancelLongPress();
+      }
+    };
+    const cancelOnEnd = (endEvent: PointerEvent) => {
+      if (endEvent.pointerId === pointerId) cancelLongPress();
+    };
+    window.addEventListener("pointermove", cancelOnMove, true);
+    window.addEventListener("pointerup", cancelOnEnd, true);
+    window.addEventListener("pointercancel", cancelOnEnd, true);
+    longPressCleanup.current = () => {
+      window.removeEventListener("pointermove", cancelOnMove, true);
+      window.removeEventListener("pointerup", cancelOnEnd, true);
+      window.removeEventListener("pointercancel", cancelOnEnd, true);
+    };
     longPressTimer.current = window.setTimeout(() => {
       suppressNextClick.current = true;
       setPreviewOpen(true);
       longPressTimer.current = null;
+      longPressCleanup.current?.();
+      longPressCleanup.current = null;
     }, 450);
   };
+
+  useEffect(() => () => cancelLongPress(), []);
 
   const handleCardClick = () => {
     if (suppressNextClick.current) {
@@ -61,7 +86,7 @@ export function Card({
     <>
       <div
         className={`group/card relative w-40 shrink-0 sm:w-44 lg:w-48 ${className}`}
-        onPointerDown={(event) => startLongPress(event.pointerType)}
+        onPointerDown={startLongPress}
         onPointerUp={cancelLongPress}
         onPointerCancel={cancelLongPress}
         onPointerLeave={cancelLongPress}
