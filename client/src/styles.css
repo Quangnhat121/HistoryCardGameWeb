@@ -929,7 +929,7 @@ h1, h2, h3, p, span, strong, button, input { text-rendering: optimizeLegibility;
    UTILITY & GAME UI COMPONENTS
    ═══════════════════════════════════════════════════════════════════ */
 .scrollbar-thin { scrollbar-color: rgba(213,170,85,.35) transparent; scrollbar-width: thin; }
-.timeline-scroll { cursor: grab; scrollbar-color: rgba(213,170,85,.75) rgba(255,255,255,.05); scrollbar-width: auto; scroll-behavior: smooth; touch-action: pan-y; user-select: none; }
+.timeline-scroll { cursor: grab; scrollbar-color: rgba(213,170,85,.75) rgba(255,255,255,.05); scrollbar-width: auto; scroll-behavior: auto; touch-action: pan-y; user-select: none; }
 .timeline-scroll:active { cursor: grabbing; }
 .timeline-scroll::-webkit-scrollbar { height: 11px; }
 .timeline-scroll::-webkit-scrollbar-track { border-radius: 999px; background: rgba(255,255,255,.05); }

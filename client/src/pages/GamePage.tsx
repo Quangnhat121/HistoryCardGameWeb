@@ -30,7 +30,6 @@ export function GamePage({ room, game, timeoutNotice, speakingPlayerIds, onPlace
   const [placedCardMarker, setPlacedCardMarker] = useState<{ cardId: number; playerId: string } | null>(null);
   const wasMyTurn = useRef(false);
   const timelineScrollerRef = useRef<HTMLDivElement | null>(null);
-  const rootCardRef = useRef<HTMLDivElement | null>(null);
   const timelinePanRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; lastX: number; lastTime: number; velocity: number; moved: boolean } | null>(null);
   const suppressTimelineClickRef = useRef(false);
   const timelineMomentumFrameRef = useRef<number | null>(null);
@@ -65,21 +64,9 @@ export function GamePage({ room, game, timeoutNotice, speakingPlayerIds, onPlace
     }
   }, [game.lastPlaced]);
 
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      if (timelineMomentumFrameRef.current !== null) window.cancelAnimationFrame(timelineMomentumFrameRef.current);
-      timelineMomentumFrameRef.current = null;
-      const scroller = timelineScrollerRef.current;
-      const rootCard = rootCardRef.current;
-      if (!scroller || !rootCard) return;
-      const scrollerRect = scroller.getBoundingClientRect();
-      const rootRect = rootCard.getBoundingClientRect();
-      const rootCenter = rootRect.left + rootRect.width / 2;
-      const viewportCenter = scrollerRect.left + scrollerRect.width / 2;
-      scroller.scrollTo({ left: Math.max(0, scroller.scrollLeft + rootCenter - viewportCenter), behavior: "smooth" });
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [game.currentPlayerId, game.rootCard.cardId]);
+  useEffect(() => () => {
+    if (timelineMomentumFrameRef.current !== null) window.cancelAnimationFrame(timelineMomentumFrameRef.current);
+  }, []);
 
   const place = () => {
     if (!isMyTurn || selectedCardId === null || selectedIndex === null || awaitingVerdict) return;
@@ -139,7 +126,7 @@ export function GamePage({ room, game, timeoutNotice, speakingPlayerIds, onPlace
     const pan = timelinePanRef.current;
     if (!pan || pan.pointerId !== event.pointerId || !timelineScrollerRef.current) return;
     const deltaX = event.clientX - pan.startX;
-    if (Math.abs(deltaX) > 6) {
+    if (Math.abs(deltaX) > 2) {
       if (!pan.moved) event.currentTarget.setPointerCapture(event.pointerId);
       pan.moved = true;
       suppressTimelineClickRef.current = true;
@@ -224,7 +211,7 @@ export function GamePage({ room, game, timeoutNotice, speakingPlayerIds, onPlace
             return (
               <div key={card.cardId} className="flex shrink-0 items-center gap-2">
                 <button type="button" data-timeline-drop-index={index} disabled={!isMyTurn || awaitingVerdict || (selectedCardId === null && draggedCard === null)} onClick={() => setSelectedIndex(index)} aria-label={`Chèn tại vị trí ${index}`} className={`timeline-drop-zone flex h-36 w-8 shrink-0 items-center justify-center rounded-xl border border-dashed text-2xl transition disabled:opacity-20 ${(selectedIndex === index || draggedOverIndex === index) ? "is-active border-gold bg-gold/20 text-gold" : "border-white/15 text-slate-600 hover:border-gold/60 hover:text-gold"}`}>+</button>
-                <div ref={card.isRoot ? rootCardRef : undefined} className={`relative ${isMarkedAsPlaced ? "timeline-last-placed" : ""}`}>
+                <div className={`relative ${isMarkedAsPlaced ? "timeline-last-placed" : ""}`}>
                   {card.isRoot && <span className="absolute -top-6 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-gold px-2 py-1 text-[9px] font-black uppercase text-black">Thẻ gốc</span>}
                   {isMarkedAsPlaced && <span className="timeline-last-placed-label" title={`${placedCardPlayerName} vừa đặt thẻ này`} aria-label={`${placedCardPlayerName} vừa đặt thẻ này`}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v3h14v-3" /></svg><span>{placedCardPlayerName}</span></span>}
                   <Card card={card} showBack={card.revealed} year={card.year} month={card.month} selected={selectedChallengeId === card.cardId} highlighted={isMarkedAsPlaced} clickable={card.cardId === game.lastPlaced?.cardId && canChallenge} onClick={card.cardId === game.lastPlaced?.cardId && canChallenge ? () => setSelectedChallengeId(card.cardId) : undefined} className="w-44 sm:w-48 lg:w-52" />
