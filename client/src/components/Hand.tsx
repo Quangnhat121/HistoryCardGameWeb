@@ -1,3 +1,5 @@
+import { useRef } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import type { CardFront } from "../types";
 import { Card } from "./Card";
 
@@ -6,24 +8,108 @@ interface HandProps {
   selectedCardId: number | null;
   disabled: boolean;
   onSelect: (cardId: number) => void;
+  onDragStart: (cardId: number, clientX: number, clientY: number) => void;
+  onDragMove: (clientX: number, clientY: number) => void;
+  onDragEnd: (clientX: number, clientY: number) => void;
+  onDragCancel: () => void;
 }
 
-export function Hand({ cards, selectedCardId, disabled, onSelect }: HandProps) {
+interface PointerGesture {
+  pointerId: number;
+  startX: number;
+  startY: number;
+  startScrollLeft: number;
+  cardId: number | null;
+  mode: "pending" | "scroll" | "card";
+}
+
+export function Hand({
+  cards, selectedCardId, disabled, onSelect, onDragStart, onDragMove, onDragEnd, onDragCancel,
+}: HandProps) {
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const gestureRef = useRef<PointerGesture | null>(null);
+  const suppressClickRef = useRef(false);
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0 || !scrollerRef.current) return;
+    suppressClickRef.current = false;
+    const cardElement = (event.target as HTMLElement).closest<HTMLElement>("[data-hand-card-id]");
+    const parsedCardId = cardElement ? Number(cardElement.dataset.handCardId) : null;
+    gestureRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startScrollLeft: scrollerRef.current.scrollLeft,
+      cardId: Number.isFinite(parsedCardId) ? parsedCardId : null,
+      mode: "pending",
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const gesture = gestureRef.current;
+    const scroller = scrollerRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId || !scroller) return;
+    const deltaX = event.clientX - gesture.startX;
+    const deltaY = event.clientY - gesture.startY;
+
+    if (gesture.mode === "pending" && Math.hypot(deltaX, deltaY) > 8) {
+      const isHorizontal = Math.abs(deltaX) > Math.abs(deltaY);
+      gesture.mode = isHorizontal || gesture.cardId === null || disabled ? "scroll" : "card";
+      suppressClickRef.current = true;
+      if (gesture.mode === "card" && gesture.cardId !== null) {
+        onDragStart(gesture.cardId, event.clientX, event.clientY);
+      }
+    }
+
+    if (gesture.mode === "scroll") {
+      scroller.scrollLeft = gesture.startScrollLeft - deltaX;
+    } else if (gesture.mode === "card") {
+      onDragMove(event.clientX, event.clientY);
+    }
+  };
+
+  const finishGesture = (event: ReactPointerEvent<HTMLDivElement>, cancelled = false) => {
+    const gesture = gestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    if (gesture.mode === "card") {
+      if (cancelled) onDragCancel();
+      else onDragEnd(event.clientX, event.clientY);
+    }
+    gestureRef.current = null;
+    if (cancelled) suppressClickRef.current = false;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+  };
+
   return (
     <section aria-label="Bài trên tay" className="mt-4">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-lg font-bold tracking-normal text-parchment">Bài trên tay</h2>
-        <span className="text-xs text-slate-400">{cards.length} thẻ</span>
+        <span className="text-right text-xs text-slate-400">{cards.length} thẻ · Kéo ngang để xem</span>
       </div>
-      <div className="scrollbar-thin flex min-h-48 gap-3 overflow-x-auto px-2 pb-5 pt-4 sm:justify-center">
+      <div
+        ref={scrollerRef}
+        className="hand-scroll scrollbar-thin flex min-h-48 cursor-grab gap-3 overflow-x-auto px-2 pb-5 pt-4 active:cursor-grabbing sm:justify-center"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={(event) => finishGesture(event)}
+        onPointerCancel={(event) => finishGesture(event, true)}
+        onClickCapture={(event) => {
+          if (!suppressClickRef.current) return;
+          event.preventDefault();
+          event.stopPropagation();
+          suppressClickRef.current = false;
+        }}
+      >
         {cards.map((card) => (
-          <Card
-            key={card.cardId}
-            card={card}
-            selected={selectedCardId === card.cardId}
-            clickable={!disabled}
-            onClick={() => onSelect(card.cardId)}
-          />
+          <div key={card.cardId} data-hand-card-id={card.cardId} className="shrink-0">
+            <Card
+              card={card}
+              selected={selectedCardId === card.cardId}
+              clickable={!disabled}
+              onClick={() => onSelect(card.cardId)}
+            />
+          </div>
         ))}
       </div>
     </section>

@@ -123,13 +123,15 @@ HistoryCardGameWeb/
 ### `GamePage`
 
 - Hiển thị timeline thẻ, tay bài, thứ tự lượt và danh sách người chơi.
-- Người đến lượt chọn một thẻ trên tay và vị trí chèn trên timeline.
+- Người đến lượt có thể kéo thẻ trên tay và thả trực tiếp vào khe trên timeline; thao tác chọn thẻ/chọn khe bằng nút vẫn được giữ cho bàn phím và accessibility.
+- Khu bài trên tay hỗ trợ kéo ngang bằng chuột hoặc cảm ứng để cuộn danh sách.
+- Timeline hỗ trợ giữ và kéo ngang trực tiếp trên mặt bàn, không bắt buộc dùng thanh cuộn.
 - Có hành động khui/thách thức thẻ vừa đặt.
 - Hiển thị kết quả khui bằng overlay.
 - Có timer theo lượt và thông báo người chơi hết giờ.
 - Người đang nói qua voice được làm sáng trong thanh người chơi.
 - Thẻ có thể phóng to; trên mobile có thể nhấn giữ.
-- Khi có thẻ mới được đặt, timeline tự cuộn thẻ đó vào giữa vùng nhìn. Thẻ có hiệu ứng xuất hiện, viền sáng và nhãn **Thẻ vừa đặt** kèm tên người đặt; trạng thái này lấy từ `game.lastPlaced` và không thay đổi luật game.
+- Khi có thẻ mới được đặt, timeline giữ nguyên vị trí cuộn hiện tại. Thẻ có hiệu ứng xuất hiện, viền sáng và icon đặt thẻ kèm tên người đặt; trạng thái này lấy từ `game.lastPlaced` và không thay đổi luật game.
 
 ### `ResultPage`
 
