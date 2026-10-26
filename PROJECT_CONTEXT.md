@@ -123,6 +123,7 @@ HistoryCardGameWeb/
 ### `GamePage`
 
 - Hiển thị timeline thẻ, tay bài, thứ tự lượt và danh sách người chơi.
+- Overlay quay người đi trước chốt theo `currentPlayerId` từ backend và khóa callback quay trước khi hiển thị kết quả để không lệch người mở màn do race condition của timer.
 - Người đến lượt có thể kéo thẻ trên tay và thả trực tiếp vào khe trên timeline; thao tác chọn thẻ/chọn khe bằng nút vẫn được giữ cho bàn phím và accessibility.
 - Khu bài trên tay hỗ trợ kéo ngang bằng chuột hoặc cảm ứng để cuộn danh sách, có quán tính giảm dần sau khi thả.
 - Timeline bám trực tiếp theo con trỏ khi giữ và kéo ngang; sau khi thả mới tiếp tục trượt theo quán tính giảm dần. Timeline không tự cuộn khi bắt đầu hoặc chuyển lượt và không bắt buộc dùng thanh cuộn.
