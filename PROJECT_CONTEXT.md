@@ -81,6 +81,7 @@ HistoryCardGameWeb/
 ├─ card/                           # Ảnh nguồn ban đầu, chủ yếu PNG
 ├─ outputs/                        # File dữ liệu/đầu ra hỗ trợ nội dung
 ├─ DEPLOY_VERCEL.md                # Hướng dẫn deploy chi tiết
+├─ REDIS_MIGRATION_PLAN.md         # Kế hoạch chuyển room/game state Cards sang Redis
 ├─ SERVER_PROGRESS.md              # Ghi chú tiến độ backend cũ
 └─ PROJECT_CONTEXT.md              # File đang đọc
 ```
@@ -379,6 +380,7 @@ npm run build
 - Vercel có thể tạo nhiều Function instance hoặc thay instance khi reconnect.
 - Vì vậy kiến trúc hiện tại phù hợp demo/lưu lượng thấp nhưng chưa bảo đảm đồng nhất ở quy mô production.
 - Hướng nâng cấp đúng: lưu room/game state và timer trong Redis, dùng Socket.IO Redis adapter/pub-sub, và chạy realtime backend trên môi trường hỗ trợ WebSocket lâu dài.
+- Kế hoạch migration chi tiết, lộ trình test và rollout nằm tại `REDIS_MIGRATION_PLAN.md`; tài liệu này mới là kế hoạch, chưa phải tính năng đã triển khai.
 - WebRTC mesh phù hợp tối đa 4 người hiện tại; nếu tăng số người đáng kể nên cân nhắc SFU.
 
 ## 14. Quy ước và lưu ý khi sửa
