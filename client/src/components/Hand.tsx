@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import type { CardFront } from "../types";
 import { Card } from "./Card";
@@ -21,6 +21,9 @@ interface PointerGesture {
   startScrollLeft: number;
   cardId: number | null;
   mode: "pending" | "scroll" | "card";
+  lastX: number;
+  lastTime: number;
+  velocity: number;
 }
 
 export function Hand({
@@ -29,9 +32,39 @@ export function Hand({
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const gestureRef = useRef<PointerGesture | null>(null);
   const suppressClickRef = useRef(false);
+  const momentumFrameRef = useRef<number | null>(null);
+
+  const stopMomentum = () => {
+    if (momentumFrameRef.current !== null) window.cancelAnimationFrame(momentumFrameRef.current);
+    momentumFrameRef.current = null;
+  };
+
+  const startMomentum = (initialVelocity: number) => {
+    const scroller = scrollerRef.current;
+    if (!scroller || Math.abs(initialVelocity) < 0.02) return;
+    let velocity = initialVelocity;
+    let previousTime = performance.now();
+    const glide = (time: number) => {
+      const elapsed = Math.min(32, time - previousTime);
+      previousTime = time;
+      const previousScrollLeft = scroller.scrollLeft;
+      scroller.scrollLeft += velocity * elapsed;
+      velocity *= Math.pow(0.94, elapsed / 16);
+      const reachedEdge = scroller.scrollLeft === previousScrollLeft;
+      if (Math.abs(velocity) < 0.02 || reachedEdge) {
+        momentumFrameRef.current = null;
+        return;
+      }
+      momentumFrameRef.current = window.requestAnimationFrame(glide);
+    };
+    momentumFrameRef.current = window.requestAnimationFrame(glide);
+  };
+
+  useEffect(() => () => stopMomentum(), []);
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0 || !scrollerRef.current) return;
+    stopMomentum();
     suppressClickRef.current = false;
     const cardElement = (event.target as HTMLElement).closest<HTMLElement>("[data-hand-card-id]");
     const parsedCardId = cardElement ? Number(cardElement.dataset.handCardId) : null;
@@ -42,6 +75,9 @@ export function Hand({
       startScrollLeft: scrollerRef.current.scrollLeft,
       cardId: Number.isFinite(parsedCardId) ? parsedCardId : null,
       mode: "pending",
+      lastX: event.clientX,
+      lastTime: event.timeStamp,
+      velocity: 0,
     };
   };
 
@@ -64,6 +100,10 @@ export function Hand({
 
     if (gesture.mode === "scroll") {
       scroller.scrollLeft = gesture.startScrollLeft - deltaX;
+      const elapsed = Math.max(1, event.timeStamp - gesture.lastTime);
+      gesture.velocity = -(event.clientX - gesture.lastX) / elapsed;
+      gesture.lastX = event.clientX;
+      gesture.lastTime = event.timeStamp;
     } else if (gesture.mode === "card") {
       onDragMove(event.clientX, event.clientY);
     }
@@ -75,6 +115,8 @@ export function Hand({
     if (gesture.mode === "card") {
       if (cancelled) onDragCancel();
       else onDragEnd(event.clientX, event.clientY);
+    } else if (gesture.mode === "scroll" && !cancelled) {
+      startMomentum(event.timeStamp - gesture.lastTime > 80 ? 0 : gesture.velocity);
     }
     gestureRef.current = null;
     if (cancelled) suppressClickRef.current = false;

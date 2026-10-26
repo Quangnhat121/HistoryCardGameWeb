@@ -27,17 +27,21 @@ export function GamePage({ room, game, timeoutNotice, speakingPlayerIds, onPlace
   const [challengePending, setChallengePending] = useState(false);
   const [draggedCard, setDraggedCard] = useState<{ cardId: number; x: number; y: number } | null>(null);
   const [draggedOverIndex, setDraggedOverIndex] = useState<number | null>(null);
+  const [placedCardMarker, setPlacedCardMarker] = useState<{ cardId: number; playerId: string } | null>(null);
   const wasMyTurn = useRef(false);
   const timelineScrollerRef = useRef<HTMLDivElement | null>(null);
-  const timelinePanRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; moved: boolean } | null>(null);
+  const rootCardRef = useRef<HTMLDivElement | null>(null);
+  const timelinePanRef = useRef<{ pointerId: number; startX: number; startScrollLeft: number; lastX: number; lastTime: number; velocity: number; moved: boolean } | null>(null);
   const suppressTimelineClickRef = useRef(false);
+  const timelineMomentumFrameRef = useRef<number | null>(null);
   const isMyTurn = game.currentPlayerId === room.selfPlayerId;
   const ownPlayer = game.players.find((player) => player.id === room.selfPlayerId);
   const hand = ownPlayer?.hand ?? [];
   const canChallenge = isMyTurn && game.lastPlaced !== null && !game.hasChallengedThisTurn;
   const awaitingVerdict = game.phase === "awaiting_verdict";
   const currentPlayerName = game.players.find((player) => player.id === game.currentPlayerId)?.name ?? "Người chơi";
-  const lastPlacedPlayerName = game.players.find((player) => player.id === game.lastPlaced?.playerId)?.name ?? "Người chơi trước";
+  const placedCardPlayerName = game.players.find((player) => player.id === placedCardMarker?.playerId)?.name ?? "Người chơi trước";
+  const placedCardEvent = game.timeline.find((card) => card.cardId === placedCardMarker?.cardId)?.event;
 
   useEffect(() => {
     if (selectedCardId !== null && !hand.some((card) => card.cardId === selectedCardId)) setSelectedCardId(null);
@@ -50,6 +54,32 @@ export function GamePage({ room, game, timeoutNotice, speakingPlayerIds, onPlace
     if (isMyTurn && !wasMyTurn.current) playYourTurn();
     wasMyTurn.current = isMyTurn;
   }, [isMyTurn]);
+
+  useEffect(() => {
+    setPlacedCardMarker(null);
+  }, [game.rootCard.cardId]);
+
+  useEffect(() => {
+    if (game.lastPlaced) {
+      setPlacedCardMarker({ cardId: game.lastPlaced.cardId, playerId: game.lastPlaced.playerId });
+    }
+  }, [game.lastPlaced]);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      if (timelineMomentumFrameRef.current !== null) window.cancelAnimationFrame(timelineMomentumFrameRef.current);
+      timelineMomentumFrameRef.current = null;
+      const scroller = timelineScrollerRef.current;
+      const rootCard = rootCardRef.current;
+      if (!scroller || !rootCard) return;
+      const scrollerRect = scroller.getBoundingClientRect();
+      const rootRect = rootCard.getBoundingClientRect();
+      const rootCenter = rootRect.left + rootRect.width / 2;
+      const viewportCenter = scrollerRect.left + scrollerRect.width / 2;
+      scroller.scrollTo({ left: Math.max(0, scroller.scrollLeft + rootCenter - viewportCenter), behavior: "smooth" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [game.currentPlayerId, game.rootCard.cardId]);
 
   const place = () => {
     if (!isMyTurn || selectedCardId === null || selectedIndex === null || awaitingVerdict) return;
@@ -91,11 +121,16 @@ export function GamePage({ room, game, timeoutNotice, speakingPlayerIds, onPlace
 
   const startTimelinePan = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0 || !timelineScrollerRef.current) return;
+    if (timelineMomentumFrameRef.current !== null) window.cancelAnimationFrame(timelineMomentumFrameRef.current);
+    timelineMomentumFrameRef.current = null;
     suppressTimelineClickRef.current = false;
     timelinePanRef.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
       startScrollLeft: timelineScrollerRef.current.scrollLeft,
+      lastX: event.clientX,
+      lastTime: event.timeStamp,
+      velocity: 0,
       moved: false,
     };
   };
@@ -109,13 +144,41 @@ export function GamePage({ room, game, timeoutNotice, speakingPlayerIds, onPlace
       pan.moved = true;
       suppressTimelineClickRef.current = true;
     }
-    if (pan.moved) timelineScrollerRef.current.scrollLeft = pan.startScrollLeft - deltaX;
+    if (pan.moved) {
+      timelineScrollerRef.current.scrollLeft = pan.startScrollLeft - deltaX;
+      const elapsed = Math.max(1, event.timeStamp - pan.lastTime);
+      pan.velocity = -(event.clientX - pan.lastX) / elapsed;
+      pan.lastX = event.clientX;
+      pan.lastTime = event.timeStamp;
+    }
+  };
+
+  const startTimelineMomentum = (initialVelocity: number) => {
+    const scroller = timelineScrollerRef.current;
+    if (!scroller || Math.abs(initialVelocity) < 0.02) return;
+    let velocity = initialVelocity;
+    let previousTime = performance.now();
+    const glide = (time: number) => {
+      const elapsed = Math.min(32, time - previousTime);
+      previousTime = time;
+      const previousScrollLeft = scroller.scrollLeft;
+      scroller.scrollLeft += velocity * elapsed;
+      velocity *= Math.pow(0.94, elapsed / 16);
+      const reachedEdge = scroller.scrollLeft === previousScrollLeft;
+      if (Math.abs(velocity) < 0.02 || reachedEdge) {
+        timelineMomentumFrameRef.current = null;
+        return;
+      }
+      timelineMomentumFrameRef.current = window.requestAnimationFrame(glide);
+    };
+    timelineMomentumFrameRef.current = window.requestAnimationFrame(glide);
   };
 
   const finishTimelinePan = (event: ReactPointerEvent<HTMLDivElement>, cancelled = false) => {
     const pan = timelinePanRef.current;
     if (!pan || pan.pointerId !== event.pointerId) return;
     timelinePanRef.current = null;
+    if (pan.moved && !cancelled) startTimelineMomentum(event.timeStamp - pan.lastTime > 80 ? 0 : pan.velocity);
     if (cancelled) suppressTimelineClickRef.current = false;
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
   };
@@ -157,14 +220,14 @@ export function GamePage({ room, game, timeoutNotice, speakingPlayerIds, onPlace
         >
           <div className="flex min-h-72 w-max min-w-full items-center justify-center gap-2 px-2">
           {game.timeline.map((card, index) => {
-            const isLast = card.cardId === game.lastPlaced?.cardId;
+            const isMarkedAsPlaced = card.cardId === placedCardMarker?.cardId;
             return (
               <div key={card.cardId} className="flex shrink-0 items-center gap-2">
                 <button type="button" data-timeline-drop-index={index} disabled={!isMyTurn || awaitingVerdict || (selectedCardId === null && draggedCard === null)} onClick={() => setSelectedIndex(index)} aria-label={`Chèn tại vị trí ${index}`} className={`timeline-drop-zone flex h-36 w-8 shrink-0 items-center justify-center rounded-xl border border-dashed text-2xl transition disabled:opacity-20 ${(selectedIndex === index || draggedOverIndex === index) ? "is-active border-gold bg-gold/20 text-gold" : "border-white/15 text-slate-600 hover:border-gold/60 hover:text-gold"}`}>+</button>
-                <div className={`relative ${isLast ? "timeline-last-placed" : ""}`}>
+                <div ref={card.isRoot ? rootCardRef : undefined} className={`relative ${isMarkedAsPlaced ? "timeline-last-placed" : ""}`}>
                   {card.isRoot && <span className="absolute -top-6 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-gold px-2 py-1 text-[9px] font-black uppercase text-black">Thẻ gốc</span>}
-                  {isLast && <span className="timeline-last-placed-label" title={`${lastPlacedPlayerName} vừa đặt thẻ này`} aria-label={`${lastPlacedPlayerName} vừa đặt thẻ này`}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v3h14v-3" /></svg><span>{lastPlacedPlayerName}</span></span>}
-                  <Card card={card} showBack={card.revealed} year={card.year} month={card.month} selected={selectedChallengeId === card.cardId} highlighted={isLast} clickable={isLast && canChallenge} onClick={isLast && canChallenge ? () => setSelectedChallengeId(card.cardId) : undefined} className="w-44 sm:w-48 lg:w-52" />
+                  {isMarkedAsPlaced && <span className="timeline-last-placed-label" title={`${placedCardPlayerName} vừa đặt thẻ này`} aria-label={`${placedCardPlayerName} vừa đặt thẻ này`}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v3h14v-3" /></svg><span>{placedCardPlayerName}</span></span>}
+                  <Card card={card} showBack={card.revealed} year={card.year} month={card.month} selected={selectedChallengeId === card.cardId} highlighted={isMarkedAsPlaced} clickable={card.cardId === game.lastPlaced?.cardId && canChallenge} onClick={card.cardId === game.lastPlaced?.cardId && canChallenge ? () => setSelectedChallengeId(card.cardId) : undefined} className="w-44 sm:w-48 lg:w-52" />
                 </div>
                 {index === game.timeline.length - 1 && <button type="button" data-timeline-drop-index={game.timeline.length} disabled={!isMyTurn || awaitingVerdict || (selectedCardId === null && draggedCard === null)} onClick={() => setSelectedIndex(game.timeline.length)} aria-label={`Chèn tại vị trí ${game.timeline.length}`} className={`timeline-drop-zone flex h-36 w-8 shrink-0 items-center justify-center rounded-xl border border-dashed text-2xl transition disabled:opacity-20 ${(selectedIndex === game.timeline.length || draggedOverIndex === game.timeline.length) ? "is-active border-gold bg-gold/20 text-gold" : "border-white/15 text-slate-600 hover:border-gold/60 hover:text-gold"}`}>+</button>}
               </div>
@@ -174,7 +237,7 @@ export function GamePage({ room, game, timeoutNotice, speakingPlayerIds, onPlace
         </div>
       </section>
 
-      <p className="sr-only" aria-live="polite">{game.lastPlaced ? `${lastPlacedPlayerName} vừa đặt thẻ ${game.lastPlaced.event}.` : ""}</p>
+      <p className="sr-only" aria-live="polite">{placedCardMarker && placedCardEvent ? `${placedCardPlayerName} vừa đặt thẻ ${placedCardEvent}.` : ""}</p>
 
       <Hand
         cards={hand}
